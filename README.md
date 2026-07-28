@@ -12,10 +12,10 @@ the mod installed sees the marker for a few seconds.
 
 ## Controls
 
-| Input | Action |
-|---|---|
-| Middle click | Mark the entity you are looking at. With nothing alive in sight, vanilla pick block gets the click, and failing that a bare marker lands on the exact spot aimed at. |
-| Sneak + middle click | Mark the block you are looking at, previewed with its item icon. |
+| Input                | Action                                                                                                                                                               |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Middle click         | Mark the entity you are looking at. With nothing alive in sight, vanilla pick block gets the click, and failing that a bare marker lands on the exact spot aimed at. |
+| Sneak + middle click | Mark the block you are looking at, previewed with its item icon.                                                                                                     |
 
 ## Building
 
