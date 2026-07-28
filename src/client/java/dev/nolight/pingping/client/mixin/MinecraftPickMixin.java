@@ -12,9 +12,9 @@ public class MinecraftPickMixin {
 	@Inject(method = "pickBlockOrEntity", at = @At("HEAD"), cancellable = true)
 	private void pingping$pingInsteadOfPick(CallbackInfo ci) {
 		Minecraft client = (Minecraft) (Object) this;
-		boolean override = client.player != null && client.player.isShiftKeyDown();
+		boolean sneaking = client.player != null && client.player.isShiftKeyDown();
 
-		if (ClientPings.tryPing(override)) {
+		if (ClientPings.tryPing(sneaking)) {
 			ci.cancel();
 		}
 	}

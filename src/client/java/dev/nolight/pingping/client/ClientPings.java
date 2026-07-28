@@ -40,7 +40,7 @@ public final class ClientPings {
 	}
 
 	/** A ping being displayed. {@code entityId} is {@link PingTarget#NO_ENTITY} for a plain world position. */
-	public record ActivePing(int entityId, Vec3 pos, long expiresAt) {
+	public record ActivePing(int entityId, Vec3 pos, boolean block, long expiresAt) {
 		public Vec3 currentPos(ClientLevel level, float partialTick) {
 			if (entityId == PingTarget.NO_ENTITY) {
 				return pos;
@@ -75,7 +75,8 @@ public final class ClientPings {
 		}
 
 		ACTIVE.removeIf(ping -> target.isEntity() && ping.entityId() == target.entityId());
-		ACTIVE.add(new ActivePing(target.entityId(), target.pos(), clientTick + PingConfig.get().lifetimeTicks()));
+		ACTIVE.add(new ActivePing(target.entityId(), target.pos(), target.block(),
+				clientTick + PingConfig.get().lifetimeTicks()));
 
 		if (PingConfig.get().soundEnabled && shouldHear(level, player, sender)) {
 			// Non-positional: played at the listener's own ears, so nobody hears anyone else's ping from afar.
@@ -110,7 +111,7 @@ public final class ClientPings {
 	 * Called from the pick-block hook. Returns {@code true} when the click was consumed as a ping and vanilla
 	 * pick block should be skipped.
 	 */
-	public static boolean tryPing(boolean overridePickBlock) {
+	public static boolean tryPing(boolean sneaking) {
 		Minecraft client = Minecraft.getInstance();
 		LocalPlayer player = client.player;
 		ClientLevel level = client.level;
@@ -119,54 +120,88 @@ public final class ClientPings {
 			return false;
 		}
 
-		if (!overridePickBlock && PingConfig.get().pickBlockWins && vanillaPickWouldWork(client, player)) {
+		PingConfig config = PingConfig.get();
+
+		// Sneak is the block gesture: it marks whatever block is being aimed at and nothing else.
+		if (sneaking) {
+			PingTarget block = worldTarget(player, level, true);
+
+			if (block != null) {
+				ClientPlayNetworking.send(new PingRequestPayload(block));
+			}
+
+			return true;
+		}
+
+		Entity entity = findEntity(player, level);
+
+		if (entity != null) {
+			ClientPlayNetworking.send(new PingRequestPayload(PingTarget.ofEntity(entity.getId(), entity.position())));
+			return true;
+		}
+
+		// Nothing alive under the crosshair, so pick block gets its turn before we fall back to a bare marker.
+		if (config.pickBlockWins && vanillaPickWouldWork(client, player)) {
 			return false;
 		}
 
-		PingTarget target = findTarget(player, level);
+		PingTarget fallback = config.blockPingNeedsSneak
+				? (config.freePointPing ? worldTarget(player, level, false) : null)
+				: worldTarget(player, level, true);
 
-		if (target != null) {
-			ClientPlayNetworking.send(new PingRequestPayload(target));
+		if (fallback != null) {
+			ClientPlayNetworking.send(new PingRequestPayload(fallback));
 		}
 
-		// Swallow the click either way: the player asked for a ping, not for a block.
 		return true;
 	}
 
 	/**
-	 * Picks what the crosshair means. An entity actually under the crosshair wins; otherwise the closest entity
-	 * inside a small cone around the view snaps in; failing that the ping lands on the block being looked at.
+	 * An entity actually under the crosshair wins; otherwise the closest one inside a small cone around the view
+	 * snaps in, which is what makes marking something 60 blocks away practical.
 	 */
-	private static PingTarget findTarget(LocalPlayer player, ClientLevel level) {
-		Vec3 eye = player.getEyePosition();
-		Vec3 view = player.getViewVector(1.0f);
-		Vec3 far = eye.add(view.scale(PingConfig.get().maxDistance));
-
-		HitResult precise = ProjectileUtil.getHitResultOnViewVector(player, PINGABLE, PingConfig.get().maxDistance);
+	private static Entity findEntity(LocalPlayer player, ClientLevel level) {
+		double range = PingConfig.get().maxDistance;
+		HitResult precise = ProjectileUtil.getHitResultOnViewVector(player, PINGABLE, range);
 
 		if (precise instanceof EntityHitResult entityHit) {
-			return entity(entityHit.getEntity());
+			return entityHit.getEntity();
 		}
 
-		BlockHitResult blockHit = level.clip(
-				new ClipContext(eye, far, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
-		double limit = blockHit.getType() == HitResult.Type.MISS
-				? PingConfig.get().maxDistance
-				: blockHit.getLocation().distanceTo(eye);
+		Vec3 eye = player.getEyePosition();
+		Vec3 view = player.getViewVector(1.0f);
+		BlockHitResult blockHit = clip(player, level, eye, view, range);
+		double limit = blockHit.getType() == HitResult.Type.MISS ? range : blockHit.getLocation().distanceTo(eye);
 
-		Entity snapped = snapToEntity(player, level, eye, view, limit);
+		return snapToEntity(player, level, eye, view, limit);
+	}
 
-		if (snapped != null) {
-			return entity(snapped);
+	/**
+	 * Where a non-entity marker lands. As a block it snaps to the whole block and gains a preview; as a plain point
+	 * it stays exactly where the ray struck, so the marker sits on the pixel that was aimed at.
+	 */
+	private static PingTarget worldTarget(LocalPlayer player, ClientLevel level, boolean asBlock) {
+		double range = PingConfig.get().maxDistance;
+		Vec3 eye = player.getEyePosition();
+		Vec3 view = player.getViewVector(1.0f);
+		BlockHitResult blockHit = clip(player, level, eye, view, range);
+
+		if (blockHit.getType() == HitResult.Type.MISS) {
+			return asBlock ? null : PingTarget.ofPoint(eye.add(view.scale(range)));
 		}
 
-		if (blockHit.getType() != HitResult.Type.MISS) {
-			// Centre of the struck block, so every client can resolve the same block for its preview icon
-			// and the marker does not wobble along the face the ray happened to clip.
-			return PingTarget.ofPosition(Vec3.atCenterOf(blockHit.getBlockPos()));
+		if (!asBlock) {
+			return PingTarget.ofPoint(blockHit.getLocation());
 		}
 
-		return null;
+		return PingTarget.ofBlock(PingConfig.get().snapBlockToCentre
+				? Vec3.atCenterOf(blockHit.getBlockPos())
+				: blockHit.getLocation());
+	}
+
+	private static BlockHitResult clip(LocalPlayer player, ClientLevel level, Vec3 eye, Vec3 view, double range) {
+		return level.clip(new ClipContext(eye, eye.add(view.scale(range)),
+				ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
 	}
 
 	private static Entity snapToEntity(LocalPlayer player, ClientLevel level, Vec3 eye, Vec3 view, double limit) {

@@ -1,30 +1,33 @@
 # PingPing
 
-Fortnite-style pings for Minecraft. Middle-click an entity to mark it; everyone on the server who has the mod
-installed sees the marker for a few seconds.
+A simple multiplayer ping system for Minecraft. Middle-click to mark something; everyone on the server who has
+the mod installed sees the marker for a few seconds.
 
 - **Loader:** Fabric
 - **Minecraft:** 26.1 – 26.2
 - **Java:** 25
 - **Sides:** required on both server and client
+- **Depends on:** Fabric API, YetAnotherConfigLib (settings screen)
 
 ## Controls
 
 | Input | Action |
 |---|---|
-| Middle click | Ping the entity you are looking at (up to 64 blocks). If no entity is targeted, vanilla pick block runs as usual. |
-| Shift + middle click | Always ping, never pick block. |
+| Middle click | Mark the entity you are looking at. With nothing alive in sight, vanilla pick block gets the click, and failing that a bare marker lands on the exact spot aimed at. |
+| Sneak + middle click | Mark the block you are looking at, previewed with its item icon. |
 
 ## Building
 
 ```sh
-./gradlew build                                                              # 26.2
-./gradlew build -Pminecraft_version=26.1.2 -Pfabric_api_version=0.155.2+26.1.2   # 26.1
+./gradlew build   # 26.2
+./gradlew build -Pminecraft_version=26.1.2 -Pfabric_api_version=0.155.2+26.1.2 -Pyacl_version=3.9.6+26.1-fabric
 ```
 
 Jars land in `build/libs/` named per game version. Gradle downloads a JDK 25 toolchain on its own, so no
 system JDK is required.
 
-26.1 and 26.2 need separate jars: `SubmitNodeCollector#submitNameTag` lost its camera-distance argument in
-26.2. That single call is the only divergence, and it lives in `src/client/java-26.1` and
-`src/client/java-26.2`; everything else is shared.
+Separate jars per game version, since YACL and Fabric API are built per version. The mod's own source is shared.
+
+Settings live in `config/pingping.json` and are edited through the in-game screen (Mod Menu → PingPing). The
+limits — distance, lifetime, ping budget — are enforced by whichever side runs the logical server, so on a
+dedicated server its own config file is the one that counts.

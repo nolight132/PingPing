@@ -102,7 +102,11 @@ public final class PingHud {
 	private static void drawPreview(GuiGraphicsExtractor graphics, ClientPings.ActivePing ping, ClientLevel level,
 			float partialTick) {
 		if (ping.entityId() == PingTarget.NO_ENTITY) {
-			blitItem(graphics, PingIcons.itemForBlock(level, ping.pos()));
+			// A bare point has nothing to preview; only a deliberately marked block does.
+			if (ping.block()) {
+				blitItem(graphics, PingIcons.itemForBlock(level, ping.pos()));
+			}
+
 			return;
 		}
 

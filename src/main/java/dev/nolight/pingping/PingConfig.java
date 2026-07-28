@@ -26,6 +26,15 @@ public final class PingConfig {
 	public double snapConeDegrees = 6.0;
 	public boolean pickBlockWins = true;
 
+	/** When true a block can only be marked while sneaking; a plain click then only ever finds entities. */
+	public boolean blockPingNeedsSneak = true;
+
+	/** Sneak-marked blocks sit at the block's centre instead of the exact spot the ray struck. */
+	public boolean snapBlockToCentre = true;
+
+	/** Without sneak and with no entity in sight, drop a marker on the precise spot being aimed at. */
+	public boolean freePointPing = true;
+
 	// --- presentation, client side ---
 	public boolean soundEnabled = true;
 	public double soundRadius = 48.0;
