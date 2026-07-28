@@ -18,11 +18,11 @@ public final class PingServer {
 	}
 
 	public static void register() {
-		ServerPlayNetworking.registerGlobalReceiver(PingRequestPayload.TYPE, (payload, context) ->
-				handle(context.player(), payload.target()));
+		ServerPlayNetworking.registerGlobalReceiver(PingRequestPayload.TYPE,
+				(payload, context) -> handle(context.player(), payload.target()));
 
-		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
-				BUDGETS.remove(handler.getPlayer().getUUID()));
+		ServerPlayConnectionEvents.DISCONNECT
+				.register((handler, server) -> BUDGETS.remove(handler.getPlayer().getUUID()));
 	}
 
 	private static void handle(ServerPlayer player, PingTarget target) {

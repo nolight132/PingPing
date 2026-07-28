@@ -20,3 +20,6 @@ bin/
 # fabric
 run/
 remappedSrc/
+
+# eclipse run configs from genEclipseRuns
+*.launch

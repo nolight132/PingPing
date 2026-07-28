@@ -90,7 +90,8 @@ public final class PingHud {
 		if (PingConfig.get().showIcons) {
 			// Positioned on the matrix in floats: rounding the pixel here made previews twitch as the player moved.
 			pose.pushMatrix();
-			pose.translate(x, y - (font.lineHeight * 2.0f + 3.0f) * scale - PingConfig.get().previewSize * scale * 0.5f);
+			pose.translate(x,
+					y - (font.lineHeight * 2.0f + 3.0f) * scale - PingConfig.get().previewSize * scale * 0.5f);
 			pose.scale(scale, scale);
 			drawPreview(graphics, ping, level, partialTick);
 			pose.popMatrix();

@@ -52,8 +52,8 @@ public final class ClientPings {
 	}
 
 	public static void register() {
-		ClientPlayNetworking.registerGlobalReceiver(PingBroadcastPayload.TYPE, (payload, context) ->
-				accept(context.client(), payload.target(), payload.sender()));
+		ClientPlayNetworking.registerGlobalReceiver(PingBroadcastPayload.TYPE,
+				(payload, context) -> accept(context.client(), payload.target(), payload.sender()));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			clientTick++;

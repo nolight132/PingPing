@@ -39,7 +39,8 @@ public final class PingConfigScreen {
 				.name(text("category.targeting"))
 				.group(OptionGroup.createBuilder()
 						.name(text("group.blocks"))
-						.option(bool("block_needs_sneak", DEFAULTS.blockPingNeedsSneak, () -> config.blockPingNeedsSneak,
+						.option(bool("block_needs_sneak", DEFAULTS.blockPingNeedsSneak,
+								() -> config.blockPingNeedsSneak,
 								value -> config.blockPingNeedsSneak = value))
 						.option(bool("snap_block", DEFAULTS.snapBlockToCentre, () -> config.snapBlockToCentre,
 								value -> config.snapBlockToCentre = value))
@@ -67,13 +68,15 @@ public final class PingConfigScreen {
 								value -> config.markerScale = value, 0.25, 2.0, 0.05))
 						.option(intSlider("preview_size", DEFAULTS.previewSize, () -> config.previewSize,
 								value -> config.previewSize = value, 6, 32, 1))
-						.option(bool("show_icons", DEFAULTS.showIcons, () -> config.showIcons, value -> config.showIcons = value))
+						.option(bool("show_icons", DEFAULTS.showIcons, () -> config.showIcons,
+								value -> config.showIcons = value))
 						.option(bool("edge_arrows", DEFAULTS.showEdgeArrows, () -> config.showEdgeArrows,
 								value -> config.showEdgeArrows = value))
 						.build())
 				.group(OptionGroup.createBuilder()
 						.name(text("group.sound"))
-						.option(bool("sound", DEFAULTS.soundEnabled, () -> config.soundEnabled, value -> config.soundEnabled = value))
+						.option(bool("sound", DEFAULTS.soundEnabled, () -> config.soundEnabled,
+								value -> config.soundEnabled = value))
 						.option(doubleSlider("sound_radius", DEFAULTS.soundRadius, () -> config.soundRadius,
 								value -> config.soundRadius = value, 0.0, 256.0, 8.0))
 						.build())

@@ -1,5 +1,6 @@
 plugins {
 	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	id 'com.diffplug.spotless' version '8.9.0'
 }
 
 version = project.mod_version
@@ -48,6 +49,16 @@ dependencies {
 jar {
 	from("LICENSE") {
 		rename { "${it}_${project.base.archivesName.get()}" }
+	}
+}
+
+// Same JDT engine and same profile the editor uses, so formatting on save and formatting in CI agree.
+spotless {
+	java {
+		target 'src/**/*.java'
+		eclipse().configFile('eclipse-formatter.xml')
+		trimTrailingWhitespace()
+		endWithNewline()
 	}
 }
 
