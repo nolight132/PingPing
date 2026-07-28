@@ -23,7 +23,7 @@ public class PingPing implements ModInitializer {
 	public static final int MIN_PING_INTERVAL_TICKS = 2;
 
 	/** Maximum distance at which a player can mark an entity. */
-	public static final double MAX_PING_DISTANCE = 64.0;
+	public static final double MAX_PING_DISTANCE = 256.0;
 
 	/** Half-angle of the cone that snaps the ping onto a nearby entity, in degrees. */
 	public static final double SNAP_CONE_DEGREES = 6.0;

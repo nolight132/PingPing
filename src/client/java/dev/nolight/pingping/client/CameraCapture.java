@@ -21,7 +21,7 @@ public final class CameraCapture {
 	}
 
 	public static void register() {
-		LevelRenderEvents.START_MAIN.register(context -> {
+		LevelRenderEvents.COLLECT_SUBMITS.register(context -> {
 			CameraRenderState camera = context.levelState().cameraRenderState;
 
 			if (camera == null || camera.projectionMatrix == null || camera.pos == null) {
@@ -30,10 +30,9 @@ public final class CameraCapture {
 
 			position = camera.pos;
 			PROJECTION.set(camera.projectionMatrix);
-			// Same construction vanilla uses for the level view matrix.
-			VIEW.identity()
-					.rotateX((float) Math.toRadians(camera.xRot))
-					.rotateY((float) Math.toRadians(camera.yRot + 180.0f));
+			// The live pose, not a reconstruction from xRot/yRot: it already carries view bob, so markers stay
+			// welded to the world instead of shivering as the player walks.
+			VIEW.set(context.poseStack().last().pose());
 			ready = true;
 		});
 	}

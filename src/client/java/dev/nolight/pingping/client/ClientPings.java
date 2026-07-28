@@ -14,7 +14,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
@@ -36,8 +35,8 @@ public final class ClientPings {
 	private ClientPings() {
 	}
 
-	/** A ping being displayed. {@code entity} is null for a plain world position. */
-	public record ActivePing(int entityId, Vec3 pos, Component label, long expiresAt) {
+	/** A ping being displayed. {@code entityId} is {@link PingTarget#NO_ENTITY} for a plain world position. */
+	public record ActivePing(int entityId, Vec3 pos, long expiresAt) {
 		public Vec3 currentPos(ClientLevel level, float partialTick) {
 			if (entityId == PingTarget.NO_ENTITY) {
 				return pos;
@@ -71,12 +70,8 @@ public final class ClientPings {
 			return;
 		}
 
-		Entity entity = target.isEntity() ? level.getEntity(target.entityId()) : null;
-		Component label = entity != null ? entity.getDisplayName() : Component.translatable("pingping.marker.spot");
-
-		PingPing.LOGGER.info("[pingping] ping at {} (entity {})", target.pos(), target.entityId());
-		ACTIVE.removeIf(ping -> ping.entityId() == target.entityId() && target.isEntity());
-		ACTIVE.add(new ActivePing(target.entityId(), target.pos(), label, clientTick + PingPing.PING_LIFETIME_TICKS));
+		ACTIVE.removeIf(ping -> target.isEntity() && ping.entityId() == target.entityId());
+		ACTIVE.add(new ActivePing(target.entityId(), target.pos(), clientTick + PingPing.PING_LIFETIME_TICKS));
 
 		// Non-positional: every listener hears their own ping at their own ears, never someone else's from afar.
 		if (target.pos().distanceToSqr(player.position()) <= PingPing.SOUND_RADIUS * PingPing.SOUND_RADIUS) {
@@ -151,7 +146,9 @@ public final class ClientPings {
 
 	private static Entity snapToEntity(LocalPlayer player, ClientLevel level, Vec3 eye, Vec3 view, double limit) {
 		double minDot = Math.cos(Math.toRadians(PingPing.SNAP_CONE_DEGREES));
-		AABB search = player.getBoundingBox().expandTowards(view.scale(limit)).inflate(limit * 0.15 + 1.0);
+		// Cone half-width grows with range, but stays bounded so a 256-block ping is not a world-sized query.
+		double margin = Math.min(limit * Math.tan(Math.toRadians(PingPing.SNAP_CONE_DEGREES)) + 1.0, 12.0);
+		AABB search = player.getBoundingBox().expandTowards(view.scale(limit)).inflate(margin);
 
 		Entity best = null;
 		double bestDot = minDot;
