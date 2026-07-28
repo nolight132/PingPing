@@ -7,7 +7,7 @@ public final class PingPayloads {
 	}
 
 	public static void register() {
-		PayloadTypeRegistry.playC2S().register(PingRequestPayload.TYPE, PingRequestPayload.CODEC);
-		PayloadTypeRegistry.playS2C().register(PingBroadcastPayload.TYPE, PingBroadcastPayload.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(PingRequestPayload.TYPE, PingRequestPayload.CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(PingBroadcastPayload.TYPE, PingBroadcastPayload.CODEC);
 	}
 }

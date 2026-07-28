@@ -44,7 +44,7 @@ public final class PingServer {
 
 		PingBroadcastPayload broadcast = new PingBroadcastPayload(entityId, player.getUUID());
 
-		for (ServerPlayer receiver : PlayerLookup.all(player.getServer())) {
+		for (ServerPlayer receiver : PlayerLookup.all(level.getServer())) {
 			if (receiver.level() == level && ServerPlayNetworking.canSend(receiver, PingBroadcastPayload.TYPE)) {
 				ServerPlayNetworking.send(receiver, broadcast);
 			}

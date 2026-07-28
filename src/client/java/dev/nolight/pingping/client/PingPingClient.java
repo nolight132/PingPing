@@ -4,7 +4,7 @@ import net.fabricmc.api.ClientModInitializer;
 
 public class PingPingClient implements ClientModInitializer {
 	@Override
-	public void onInitialize() {
+	public void onInitializeClient() {
 		ClientPings.register();
 		PingMarkerRenderer.register();
 	}
