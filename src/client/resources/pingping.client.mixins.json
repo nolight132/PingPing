@@ -3,6 +3,7 @@
 	"package": "dev.nolight.pingping.client.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
+		"GameRendererInvoker",
 		"MinecraftPickMixin"
 	],
 	"injectors": {

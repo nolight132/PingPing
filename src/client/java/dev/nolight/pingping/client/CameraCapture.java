@@ -1,6 +1,9 @@
 package dev.nolight.pingping.client;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import dev.nolight.pingping.client.mixin.GameRendererInvoker;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -28,11 +31,21 @@ public final class CameraCapture {
 				return;
 			}
 
+			Minecraft client = Minecraft.getInstance();
+			GameRendererInvoker renderer = (GameRendererInvoker) client.gameRenderer;
+			PoseStack bob = new PoseStack();
+
+			renderer.pingping$bobHurt(camera, bob);
+
+			if (client.options.bobView().get()) {
+				renderer.pingping$bobView(camera, bob);
+			}
+
 			position = camera.pos;
-			PROJECTION.set(camera.projectionMatrix);
-			// The live pose, not a reconstruction from xRot/yRot: it already carries view bob, so markers stay
-			// welded to the world instead of shivering as the player walks.
-			VIEW.set(context.poseStack().last().pose());
+			// Bob lives in the projection, exactly as GameRenderer#renderLevel composes it. Without it markers
+			// shiver against the world as the player walks.
+			PROJECTION.set(camera.projectionMatrix).mul(bob.last().pose());
+			VIEW.set(camera.viewRotationMatrix);
 			ready = true;
 		});
 	}
