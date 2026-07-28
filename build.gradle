@@ -52,6 +52,20 @@ jar {
 	}
 }
 
+// JDT gives project settings precedence over anything the editor sends, so the profile is written straight into
+// .settings/org.eclipse.jdt.core.prefs. Parsed from the same XML Spotless uses, so there is one source of truth.
+eclipse {
+	jdt {
+		file {
+			withProperties { properties ->
+				new groovy.xml.XmlParser().parse(file('eclipse-formatter.xml')).profile.setting.each { setting ->
+					properties.put(setting.@id, setting.@value)
+				}
+			}
+		}
+	}
+}
+
 // Same JDT engine and same profile the editor uses, so formatting on save and formatting in CI agree.
 spotless {
 	java {
