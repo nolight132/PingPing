@@ -1,3 +1,8 @@
 {
-	"pingping.marker.distance": "%sm"
+	"pingping.marker.distance": "%sm",
+	"pingping.options.title": "PingPing",
+	"pingping.options.pick_block_wins": "Pick block takes priority",
+	"pingping.options.sound": "Ping sound",
+	"pingping.options.icons": "Show previews",
+	"pingping.options.edge_arrows": "Off-screen arrows"
 }

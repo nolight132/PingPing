@@ -40,7 +40,7 @@ public final class PingServer {
 			target = PingTarget.ofEntity(target.entityId(), spot);
 		}
 
-		double reach = PingPing.MAX_PING_DISTANCE + 8.0;
+		double reach = PingConfig.get().maxDistance + 8.0;
 
 		if (spot.distanceToSqr(player.position()) > reach * reach) {
 			return;
@@ -66,7 +66,7 @@ public final class PingServer {
 	 * wait for charges to trickle back in. The extra interval floor stops a whole bucket being dumped at once.
 	 */
 	private static final class Budget {
-		private float charges = PingPing.MAX_CHARGES;
+		private float charges = PingConfig.get().maxCharges;
 		private long refilledAt;
 		private long lastPing;
 
@@ -77,8 +77,9 @@ public final class PingServer {
 		}
 
 		boolean tryConsume(long tick) {
-			charges = Math.min(PingPing.MAX_CHARGES,
-					charges + (tick - refilledAt) / (float) PingPing.CHARGE_REFILL_TICKS);
+			PingConfig config = PingConfig.get();
+			charges = Math.min(config.maxCharges,
+					charges + (tick - refilledAt) / (float) config.chargeRefillTicks());
 			refilledAt = tick;
 
 			if (charges < 1.0f || tick - lastPing < PingPing.MIN_PING_INTERVAL_TICKS) {

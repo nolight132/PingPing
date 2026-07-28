@@ -1,5 +1,6 @@
 package dev.nolight.pingping.client;
 
+import dev.nolight.pingping.PingConfig;
 import dev.nolight.pingping.PingPing;
 import dev.nolight.pingping.PingTarget;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
@@ -7,6 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
@@ -23,10 +25,7 @@ public final class PingHud {
 	private static final int TEXT_COLOR = 0xFFFFE066;
 	private static final int BACKDROP_COLOR = 0x80000000;
 
-	/** Markers use a smaller face than the rest of the HUD. */
-	private static final float TEXT_SCALE = 0.75f;
-
-	private static final float ICON_SCALE = 0.6f;
+	private static final int PORTRAIT_SIZE = 16;
 
 	/** How far the edge arrows sit from the screen border. */
 	private static final int EDGE_INSET = 26;
@@ -69,41 +68,62 @@ public final class PingHud {
 						&& screen.y >= EDGE_INSET && screen.y <= height - EDGE_INSET;
 
 				if (onScreen) {
-					drawMarker(graphics, font, screen.x, screen.y, distance, icon(level, ping));
-				} else {
+					drawMarker(graphics, font, screen.x, screen.y, distance, ping, level, partialTick);
+				} else if (PingConfig.get().showEdgeArrows) {
 					drawEdgeArrow(graphics, font, screen, width, height, distance);
 				}
 			}
 		});
 	}
 
-	private static ItemStack icon(ClientLevel level, ClientPings.ActivePing ping) {
-		if (ping.entityId() == PingTarget.NO_ENTITY) {
-			return ItemStack.EMPTY;
-		}
-
-		Entity entity = level.getEntity(ping.entityId());
-		return entity == null ? ItemStack.EMPTY : PingIcons.forEntity(entity);
-	}
-
-	/** Diamond sits on the target, distance rides above it, icon above that. */
+	/** Diamond sits on the target, distance rides above it, preview above that. */
 	private static void drawMarker(GuiGraphicsExtractor graphics, Font font, float x, float y, Component distance,
-			ItemStack icon) {
+			ClientPings.ActivePing ping, ClientLevel level, float partialTick) {
+		float scale = (float) PingConfig.get().markerScale;
 		Matrix3x2fStack pose = graphics.pose();
 
 		pose.pushMatrix();
 		pose.translate(x, y);
-		pose.scale(TEXT_SCALE, TEXT_SCALE);
+		pose.scale(scale, scale);
 		graphics.centeredText(font, DIAMOND, 0, -font.lineHeight / 2, TEXT_COLOR);
 		backdrop(graphics, font, distance, 0, -font.lineHeight - font.lineHeight / 2 - 2);
 		pose.popMatrix();
 
-		if (!icon.isEmpty()) {
-			pose.pushMatrix();
-			pose.translate(x, y - (font.lineHeight + font.lineHeight / 2 + 4) * TEXT_SCALE);
-			pose.scale(ICON_SCALE, ICON_SCALE);
-			graphics.item(icon, -8, -16);
-			pose.popMatrix();
+		if (PingConfig.get().showIcons) {
+			drawPreview(graphics, ping, level, partialTick,
+					(int) x, (int) (y - (font.lineHeight * 2.0f + 4.0f) * scale - PORTRAIT_SIZE / 2.0f));
+		}
+	}
+
+	/** Items and blocks show their icon; anything else alive shows a live portrait of itself. */
+	private static void drawPreview(GuiGraphicsExtractor graphics, ClientPings.ActivePing ping, ClientLevel level,
+			float partialTick, int x, int y) {
+		if (ping.entityId() == PingTarget.NO_ENTITY) {
+			blitItem(graphics, PingIcons.itemForBlock(level, ping.pos()), x, y);
+			return;
+		}
+
+		Entity entity = level.getEntity(ping.entityId());
+
+		if (entity == null) {
+			return;
+		}
+
+		ItemStack stack = PingIcons.itemFor(entity);
+
+		if (!stack.isEmpty()) {
+			blitItem(graphics, stack, x, y);
+			return;
+		}
+
+		EntityRenderState state = Minecraft.getInstance().getEntityRenderDispatcher()
+				.extractEntity(entity, partialTick);
+		PingIcons.portrait(graphics, state, x, y, PORTRAIT_SIZE);
+	}
+
+	private static void blitItem(GuiGraphicsExtractor graphics, ItemStack stack, int x, int y) {
+		if (!stack.isEmpty()) {
+			graphics.item(stack, x - 8, y - 8);
 		}
 	}
 
@@ -144,14 +164,14 @@ public final class PingHud {
 		pose.pushMatrix();
 		pose.translate(x, y);
 		pose.rotate((float) Math.atan2(dirY, dirX));
-		pose.scale(TEXT_SCALE, TEXT_SCALE);
+		pose.scale((float) PingConfig.get().markerScale, (float) PingConfig.get().markerScale);
 		// The glyph points right at zero rotation.
 		graphics.centeredText(font, ARROW, 0, -font.lineHeight / 2, TEXT_COLOR);
 		pose.popMatrix();
 
 		pose.pushMatrix();
 		pose.translate(x - dirX * 14.0f, y - dirY * 14.0f);
-		pose.scale(TEXT_SCALE, TEXT_SCALE);
+		pose.scale((float) PingConfig.get().markerScale, (float) PingConfig.get().markerScale);
 		backdrop(graphics, font, distance, 0, -font.lineHeight / 2);
 		pose.popMatrix();
 	}

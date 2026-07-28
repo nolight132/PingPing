@@ -22,10 +22,20 @@ loom {
 
 def mcBranch = project.minecraft_version.startsWith('26.1') ? '26.1' : '26.2'
 
+repositories {
+	maven {
+		name = 'Terraformers'
+		url = 'https://maven.terraformersmc.com/releases'
+	}
+}
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// Optional at runtime: the entrypoint is only touched when Mod Menu is actually installed.
+	clientCompileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
 }
 
 processResources {

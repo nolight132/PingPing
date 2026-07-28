@@ -1,6 +1,7 @@
 package dev.nolight.pingping.client;
 
 import dev.nolight.pingping.PingBroadcastPayload;
+import dev.nolight.pingping.PingConfig;
 import dev.nolight.pingping.PingPing;
 import dev.nolight.pingping.PingRequestPayload;
 import dev.nolight.pingping.PingTarget;
@@ -71,10 +72,10 @@ public final class ClientPings {
 		}
 
 		ACTIVE.removeIf(ping -> target.isEntity() && ping.entityId() == target.entityId());
-		ACTIVE.add(new ActivePing(target.entityId(), target.pos(), clientTick + PingPing.PING_LIFETIME_TICKS));
+		ACTIVE.add(new ActivePing(target.entityId(), target.pos(), clientTick + PingConfig.get().lifetimeTicks()));
 
 		// Non-positional: every listener hears their own ping at their own ears, never someone else's from afar.
-		if (target.pos().distanceToSqr(player.position()) <= PingPing.SOUND_RADIUS * PingPing.SOUND_RADIUS) {
+		if (PingConfig.get().soundEnabled && target.pos().distanceToSqr(player.position()) <= PingConfig.get().soundRadius * PingConfig.get().soundRadius) {
 			client.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_PLING.value(), 1.6f, 0.5f));
 		}
 	}
@@ -96,7 +97,7 @@ public final class ClientPings {
 			return false;
 		}
 
-		if (!overridePickBlock && vanillaPickWouldWork(client, player)) {
+		if (!overridePickBlock && PingConfig.get().pickBlockWins && vanillaPickWouldWork(client, player)) {
 			return false;
 		}
 
@@ -117,9 +118,9 @@ public final class ClientPings {
 	private static PingTarget findTarget(LocalPlayer player, ClientLevel level) {
 		Vec3 eye = player.getEyePosition();
 		Vec3 view = player.getViewVector(1.0f);
-		Vec3 far = eye.add(view.scale(PingPing.MAX_PING_DISTANCE));
+		Vec3 far = eye.add(view.scale(PingConfig.get().maxDistance));
 
-		HitResult precise = ProjectileUtil.getHitResultOnViewVector(player, PINGABLE, PingPing.MAX_PING_DISTANCE);
+		HitResult precise = ProjectileUtil.getHitResultOnViewVector(player, PINGABLE, PingConfig.get().maxDistance);
 
 		if (precise instanceof EntityHitResult entityHit) {
 			return entity(entityHit.getEntity());
@@ -128,7 +129,7 @@ public final class ClientPings {
 		BlockHitResult blockHit = level.clip(
 				new ClipContext(eye, far, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
 		double limit = blockHit.getType() == HitResult.Type.MISS
-				? PingPing.MAX_PING_DISTANCE
+				? PingConfig.get().maxDistance
 				: blockHit.getLocation().distanceTo(eye);
 
 		Entity snapped = snapToEntity(player, level, eye, view, limit);
@@ -138,16 +139,18 @@ public final class ClientPings {
 		}
 
 		if (blockHit.getType() != HitResult.Type.MISS) {
-			return PingTarget.ofPosition(blockHit.getLocation());
+			// Centre of the struck block, so every client can resolve the same block for its preview icon
+			// and the marker does not wobble along the face the ray happened to clip.
+			return PingTarget.ofPosition(Vec3.atCenterOf(blockHit.getBlockPos()));
 		}
 
 		return null;
 	}
 
 	private static Entity snapToEntity(LocalPlayer player, ClientLevel level, Vec3 eye, Vec3 view, double limit) {
-		double minDot = Math.cos(Math.toRadians(PingPing.SNAP_CONE_DEGREES));
+		double minDot = Math.cos(Math.toRadians(PingConfig.get().snapConeDegrees));
 		// Cone half-width grows with range, but stays bounded so a 256-block ping is not a world-sized query.
-		double margin = Math.min(limit * Math.tan(Math.toRadians(PingPing.SNAP_CONE_DEGREES)) + 1.0, 12.0);
+		double margin = Math.min(limit * Math.tan(Math.toRadians(PingConfig.get().snapConeDegrees)) + 1.0, 12.0);
 		AABB search = player.getBoundingBox().expandTowards(view.scale(limit)).inflate(margin);
 
 		Entity best = null;

@@ -10,26 +10,8 @@ public class PingPing implements ModInitializer {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	/** How long a ping stays on screen. */
-	public static final int PING_LIFETIME_TICKS = 80;
-
-	/** Pings a player may fire back to back before the bucket runs dry. */
-	public static final int MAX_CHARGES = 5;
-
-	/** Ticks needed to regenerate one charge, so an emptied bucket is full again after five seconds. */
-	public static final int CHARGE_REFILL_TICKS = 20;
-
 	/** Hard floor between two pings, so a single burst cannot be dumped in one tick. */
 	public static final int MIN_PING_INTERVAL_TICKS = 2;
-
-	/** Maximum distance at which a player can mark an entity. */
-	public static final double MAX_PING_DISTANCE = 256.0;
-
-	/** Half-angle of the cone that snaps the ping onto a nearby entity, in degrees. */
-	public static final double SNAP_CONE_DEGREES = 6.0;
-
-	/** Beyond this distance from the marker a player no longer hears the ping. */
-	public static final double SOUND_RADIUS = 48.0;
 
 	public static Identifier id(String path) {
 		return Identifier.fromNamespaceAndPath(MOD_ID, path);

@@ -15,6 +15,9 @@
 		],
 		"client": [
 			"dev.nolight.pingping.client.PingPingClient"
+		],
+		"modmenu": [
+			"dev.nolight.pingping.client.PingModMenu"
 		]
 	},
 	"mixins": [
