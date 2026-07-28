@@ -7,7 +7,8 @@ the mod installed sees the marker for a few seconds.
 - **Minecraft:** 26.1 – 26.2
 - **Java:** 25
 - **Sides:** required on both server and client
-- **Depends on:** Fabric API, YetAnotherConfigLib (settings screen)
+- **Depends on:** Fabric API
+- **Optional:** YetAnotherConfigLib and Mod Menu, client-side, for the settings screen
 
 ## Controls
 
@@ -28,6 +29,8 @@ system JDK is required.
 
 Separate jars per game version, since YACL and Fabric API are built per version. The mod's own source is shared.
 
-Settings live in `config/pingping.json` and are edited through the in-game screen (Mod Menu → PingPing). The
+Settings live in `config/pingping.json` and are edited through the in-game screen (Mod Menu → PingPing). YACL is
+client-only, so it is a soft dependency: without it the button simply does not appear and the file still works.
+That also keeps the mod loadable on dedicated servers, which must not have YACL installed. The
 limits — distance, lifetime, ping budget — are enforced by whichever side runs the logical server, so on a
 dedicated server its own config file is the one that counts.
