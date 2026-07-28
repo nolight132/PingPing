@@ -1,0 +1,32 @@
+{
+	"schemaVersion": 1,
+	"id": "pingping",
+	"version": "${version}",
+	"name": "PingPing",
+	"description": "Fortnite-style middle-click pings that attach to entities and are visible to everyone on the server.",
+	"authors": [
+		"nolight"
+	],
+	"license": "MIT",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"dev.nolight.pingping.PingPing"
+		],
+		"client": [
+			"dev.nolight.pingping.client.PingPingClient"
+		]
+	},
+	"mixins": [
+		{
+			"config": "pingping.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": ">=26.1 <26.3-",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

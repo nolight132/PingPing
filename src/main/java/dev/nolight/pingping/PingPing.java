@@ -1,0 +1,31 @@
+package dev.nolight.pingping;
+
+import net.fabricmc.api.ModInitializer;
+import net.minecraft.resources.ResourceLocation;
+
+public class PingPing implements ModInitializer {
+	public static final String MOD_ID = "pingping";
+
+	/** How long a ping stays on screen. */
+	public static final int PING_LIFETIME_TICKS = 80;
+
+	/** Pings a player may fire back to back before the bucket runs dry. */
+	public static final int MAX_CHARGES = 5;
+
+	/** Ticks needed to regenerate one charge. */
+	public static final int CHARGE_REFILL_TICKS = 30;
+
+	/** Hard floor between two pings, so a single burst cannot be dumped in one tick. */
+	public static final int MIN_PING_INTERVAL_TICKS = 4;
+
+	/** Maximum distance at which a player can mark an entity. */
+	public static final double MAX_PING_DISTANCE = 64.0;
+
+	public static ResourceLocation id(String path) {
+		return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+	}
+
+	@Override
+	public void onInitialize() {
+	}
+}
