@@ -59,6 +59,7 @@ public final class ClientPings {
 			return;
 		}
 
+		PingPing.LOGGER.info("[pingping] client received ping for entity {}", entityId);
 		ACTIVE.put(entityId, clientTick + PingPing.PING_LIFETIME_TICKS);
 		level.playLocalSound(target, SoundEvents.NOTE_BLOCK_PLING.value(), SoundSource.PLAYERS, 0.6f, 1.6f);
 	}
@@ -83,13 +84,19 @@ public final class ClientPings {
 			return false;
 		}
 
+		PingPing.LOGGER.info("[pingping] middle click: crosshair={} creative={} override={}",
+				client.hitResult == null ? "null" : client.hitResult.getType(), player.isCreative(), overridePickBlock);
+
 		if (!overridePickBlock && vanillaPickWouldWork(client, player)) {
+			PingPing.LOGGER.info("[pingping] deferring to vanilla pick block");
 			return false;
 		}
 
 		HitResult hit = ProjectileUtil.getHitResultOnViewVector(player, PINGABLE, PingPing.MAX_PING_DISTANCE);
+		PingPing.LOGGER.info("[pingping] ping raycast hit {}", hit.getType());
 
 		if (hit instanceof EntityHitResult entityHit) {
+			PingPing.LOGGER.info("[pingping] sending request for entity {}", entityHit.getEntity().getId());
 			ClientPlayNetworking.send(new PingRequestPayload(entityHit.getEntity().getId()));
 		}
 

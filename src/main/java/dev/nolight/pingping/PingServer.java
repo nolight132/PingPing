@@ -28,27 +28,37 @@ public final class PingServer {
 		ServerLevel level = player.level();
 		Entity target = level.getEntity(entityId);
 
+		PingPing.LOGGER.info("[pingping] server got request for entity {} from {}", entityId, player.getName().getString());
+
 		if (target == null || target.isRemoved()) {
+			PingPing.LOGGER.info("[pingping] rejected: no such entity");
 			return;
 		}
 
 		if (target.distanceToSqr(player) > PingPing.MAX_PING_DISTANCE * PingPing.MAX_PING_DISTANCE) {
+			PingPing.LOGGER.info("[pingping] rejected: too far");
 			return;
 		}
 
 		long tick = level.getGameTime();
 
 		if (!BUDGETS.computeIfAbsent(player.getUUID(), uuid -> new Budget(tick)).tryConsume(tick)) {
+			PingPing.LOGGER.info("[pingping] rejected: rate limited");
 			return;
 		}
 
 		PingBroadcastPayload broadcast = new PingBroadcastPayload(entityId, player.getUUID());
 
+		int sent = 0;
+
 		for (ServerPlayer receiver : PlayerLookup.all(level.getServer())) {
 			if (receiver.level() == level && ServerPlayNetworking.canSend(receiver, PingBroadcastPayload.TYPE)) {
 				ServerPlayNetworking.send(receiver, broadcast);
+				sent++;
 			}
 		}
+
+		PingPing.LOGGER.info("[pingping] broadcast to {} player(s)", sent);
 	}
 
 	/**

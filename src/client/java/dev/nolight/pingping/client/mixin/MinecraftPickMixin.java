@@ -12,6 +12,7 @@ public class MinecraftPickMixin {
 	@Inject(method = "pickBlockOrEntity", at = @At("HEAD"), cancellable = true)
 	private void pingping$pingInsteadOfPick(CallbackInfo ci) {
 		Minecraft client = (Minecraft) (Object) this;
+		dev.nolight.pingping.PingPing.LOGGER.info("[pingping] pick hook fired");
 		boolean override = client.player != null && client.player.isShiftKeyDown();
 
 		if (ClientPings.tryPing(override)) {
