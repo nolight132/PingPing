@@ -3,8 +3,9 @@ package dev.nolight.pingping.client;
 import dev.nolight.pingping.PingBroadcastPayload;
 import dev.nolight.pingping.PingPing;
 import dev.nolight.pingping.PingRequestPayload;
-import java.util.HashMap;
-import java.util.Map;
+import dev.nolight.pingping.PingTarget;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Predicate;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -12,32 +13,48 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
-/** Tracks which entities are currently marked, and turns middle clicks into ping requests. */
+/** Tracks live pings and turns middle clicks into ping requests. */
 public final class ClientPings {
 	private static final Predicate<Entity> PINGABLE = entity -> !entity.isSpectator() && entity.isPickable();
 
-	/** entity id -> tick at which the marker disappears. */
-	private static final Map<Integer, Long> ACTIVE = new HashMap<>();
+	private static final List<ActivePing> ACTIVE = new ArrayList<>();
 
 	private static long clientTick;
 
 	private ClientPings() {
 	}
 
+	/** A ping being displayed. {@code entity} is null for a plain world position. */
+	public record ActivePing(int entityId, Vec3 pos, Component label, long expiresAt) {
+		public Vec3 currentPos(ClientLevel level, float partialTick) {
+			if (entityId == PingTarget.NO_ENTITY) {
+				return pos;
+			}
+
+			Entity entity = level.getEntity(entityId);
+			return entity == null ? pos : entity.getPosition(partialTick).add(0.0, entity.getBbHeight() * 0.65, 0.0);
+		}
+	}
+
 	public static void register() {
 		ClientPlayNetworking.registerGlobalReceiver(PingBroadcastPayload.TYPE, (payload, context) ->
-				accept(context.client(), payload.entityId()));
+				accept(context.client(), payload.target()));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			clientTick++;
-			ACTIVE.values().removeIf(expiry -> expiry <= clientTick);
+			ACTIVE.removeIf(ping -> ping.expiresAt() <= clientTick);
 		});
 
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
@@ -46,30 +63,29 @@ public final class ClientPings {
 		});
 	}
 
-	private static void accept(Minecraft client, int entityId) {
+	private static void accept(Minecraft client, PingTarget target) {
 		ClientLevel level = client.level;
+		LocalPlayer player = client.player;
 
-		if (level == null) {
+		if (level == null || player == null) {
 			return;
 		}
 
-		Entity target = level.getEntity(entityId);
+		Entity entity = target.isEntity() ? level.getEntity(target.entityId()) : null;
+		Component label = entity != null ? entity.getDisplayName() : Component.translatable("pingping.marker.spot");
 
-		if (target == null) {
-			return;
+		PingPing.LOGGER.info("[pingping] ping at {} (entity {})", target.pos(), target.entityId());
+		ACTIVE.removeIf(ping -> ping.entityId() == target.entityId() && target.isEntity());
+		ACTIVE.add(new ActivePing(target.entityId(), target.pos(), label, clientTick + PingPing.PING_LIFETIME_TICKS));
+
+		// Non-positional: every listener hears their own ping at their own ears, never someone else's from afar.
+		if (target.pos().distanceToSqr(player.position()) <= PingPing.SOUND_RADIUS * PingPing.SOUND_RADIUS) {
+			client.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_PLING.value(), 1.6f, 0.5f));
 		}
-
-		PingPing.LOGGER.info("[pingping] client received ping for entity {}", entityId);
-		ACTIVE.put(entityId, clientTick + PingPing.PING_LIFETIME_TICKS);
-		level.playLocalSound(target, SoundEvents.NOTE_BLOCK_PLING.value(), SoundSource.PLAYERS, 0.6f, 1.6f);
 	}
 
-	public static Map<Integer, Long> active() {
+	public static List<ActivePing> active() {
 		return ACTIVE;
-	}
-
-	public static long clientTick() {
-		return clientTick;
 	}
 
 	/**
@@ -79,29 +95,97 @@ public final class ClientPings {
 	public static boolean tryPing(boolean overridePickBlock) {
 		Minecraft client = Minecraft.getInstance();
 		LocalPlayer player = client.player;
+		ClientLevel level = client.level;
 
-		if (player == null || client.level == null) {
+		if (player == null || level == null) {
 			return false;
 		}
-
-		PingPing.LOGGER.info("[pingping] middle click: crosshair={} creative={} override={}",
-				client.hitResult == null ? "null" : client.hitResult.getType(), player.isCreative(), overridePickBlock);
 
 		if (!overridePickBlock && vanillaPickWouldWork(client, player)) {
-			PingPing.LOGGER.info("[pingping] deferring to vanilla pick block");
 			return false;
 		}
 
-		HitResult hit = ProjectileUtil.getHitResultOnViewVector(player, PINGABLE, PingPing.MAX_PING_DISTANCE);
-		PingPing.LOGGER.info("[pingping] ping raycast hit {}", hit.getType());
+		PingTarget target = findTarget(player, level);
 
-		if (hit instanceof EntityHitResult entityHit) {
-			PingPing.LOGGER.info("[pingping] sending request for entity {}", entityHit.getEntity().getId());
-			ClientPlayNetworking.send(new PingRequestPayload(entityHit.getEntity().getId()));
+		if (target != null) {
+			ClientPlayNetworking.send(new PingRequestPayload(target));
 		}
 
 		// Swallow the click either way: the player asked for a ping, not for a block.
 		return true;
+	}
+
+	/**
+	 * Picks what the crosshair means. An entity actually under the crosshair wins; otherwise the closest entity
+	 * inside a small cone around the view snaps in; failing that the ping lands on the block being looked at.
+	 */
+	private static PingTarget findTarget(LocalPlayer player, ClientLevel level) {
+		Vec3 eye = player.getEyePosition();
+		Vec3 view = player.getViewVector(1.0f);
+		Vec3 far = eye.add(view.scale(PingPing.MAX_PING_DISTANCE));
+
+		HitResult precise = ProjectileUtil.getHitResultOnViewVector(player, PINGABLE, PingPing.MAX_PING_DISTANCE);
+
+		if (precise instanceof EntityHitResult entityHit) {
+			return entity(entityHit.getEntity());
+		}
+
+		BlockHitResult blockHit = level.clip(
+				new ClipContext(eye, far, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+		double limit = blockHit.getType() == HitResult.Type.MISS
+				? PingPing.MAX_PING_DISTANCE
+				: blockHit.getLocation().distanceTo(eye);
+
+		Entity snapped = snapToEntity(player, level, eye, view, limit);
+
+		if (snapped != null) {
+			return entity(snapped);
+		}
+
+		if (blockHit.getType() != HitResult.Type.MISS) {
+			return PingTarget.ofPosition(blockHit.getLocation());
+		}
+
+		return null;
+	}
+
+	private static Entity snapToEntity(LocalPlayer player, ClientLevel level, Vec3 eye, Vec3 view, double limit) {
+		double minDot = Math.cos(Math.toRadians(PingPing.SNAP_CONE_DEGREES));
+		AABB search = player.getBoundingBox().expandTowards(view.scale(limit)).inflate(limit * 0.15 + 1.0);
+
+		Entity best = null;
+		double bestDot = minDot;
+
+		for (Entity candidate : level.getEntities(player, search, PINGABLE)) {
+			Vec3 toCandidate = candidate.getBoundingBox().getCenter().subtract(eye);
+			double distance = toCandidate.length();
+
+			if (distance < 1.0e-4 || distance > limit + candidate.getBbWidth()) {
+				continue;
+			}
+
+			double dot = toCandidate.scale(1.0 / distance).dot(view);
+
+			if (dot <= bestDot) {
+				continue;
+			}
+
+			BlockHitResult blocked = level.clip(new ClipContext(eye, candidate.getBoundingBox().getCenter(),
+					ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+
+			if (blocked.getType() != HitResult.Type.MISS) {
+				continue;
+			}
+
+			best = candidate;
+			bestDot = dot;
+		}
+
+		return best;
+	}
+
+	private static PingTarget entity(Entity entity) {
+		return PingTarget.ofEntity(entity.getId(), entity.position());
 	}
 
 	/** Vanilla pick block is only meaningful on blocks, or on entities while in creative (spawn eggs). */
@@ -117,5 +201,9 @@ public final class ClientPings {
 			case ENTITY -> player.isCreative();
 			case MISS -> false;
 		};
+	}
+
+	public static long clientTick() {
+		return clientTick;
 	}
 }

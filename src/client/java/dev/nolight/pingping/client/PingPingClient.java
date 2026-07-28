@@ -6,6 +6,7 @@ public class PingPingClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		ClientPings.register();
-		PingMarkerRenderer.register();
+		CameraCapture.register();
+		PingHud.register();
 	}
 }

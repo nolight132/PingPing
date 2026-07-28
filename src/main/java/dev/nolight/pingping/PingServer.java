@@ -9,6 +9,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 
 public final class PingServer {
 	private static final Map<UUID, Budget> BUDGETS = new HashMap<>();
@@ -18,47 +19,46 @@ public final class PingServer {
 
 	public static void register() {
 		ServerPlayNetworking.registerGlobalReceiver(PingRequestPayload.TYPE, (payload, context) ->
-				handle(context.player(), payload.entityId()));
+				handle(context.player(), payload.target()));
 
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
 				BUDGETS.remove(handler.getPlayer().getUUID()));
 	}
 
-	private static void handle(ServerPlayer player, int entityId) {
+	private static void handle(ServerPlayer player, PingTarget target) {
 		ServerLevel level = player.level();
-		Entity target = level.getEntity(entityId);
+		Vec3 spot = target.pos();
 
-		PingPing.LOGGER.info("[pingping] server got request for entity {} from {}", entityId, player.getName().getString());
+		if (target.isEntity()) {
+			Entity entity = level.getEntity(target.entityId());
 
-		if (target == null || target.isRemoved()) {
-			PingPing.LOGGER.info("[pingping] rejected: no such entity");
-			return;
+			if (entity == null || entity.isRemoved()) {
+				return;
+			}
+
+			spot = entity.position();
+			target = PingTarget.ofEntity(target.entityId(), spot);
 		}
 
-		if (target.distanceToSqr(player) > PingPing.MAX_PING_DISTANCE * PingPing.MAX_PING_DISTANCE) {
-			PingPing.LOGGER.info("[pingping] rejected: too far");
+		double reach = PingPing.MAX_PING_DISTANCE + 8.0;
+
+		if (spot.distanceToSqr(player.position()) > reach * reach) {
 			return;
 		}
 
 		long tick = level.getGameTime();
 
 		if (!BUDGETS.computeIfAbsent(player.getUUID(), uuid -> new Budget(tick)).tryConsume(tick)) {
-			PingPing.LOGGER.info("[pingping] rejected: rate limited");
 			return;
 		}
 
-		PingBroadcastPayload broadcast = new PingBroadcastPayload(entityId, player.getUUID());
-
-		int sent = 0;
+		PingBroadcastPayload broadcast = new PingBroadcastPayload(target, player.getUUID());
 
 		for (ServerPlayer receiver : PlayerLookup.all(level.getServer())) {
 			if (receiver.level() == level && ServerPlayNetworking.canSend(receiver, PingBroadcastPayload.TYPE)) {
 				ServerPlayNetworking.send(receiver, broadcast);
-				sent++;
 			}
 		}
-
-		PingPing.LOGGER.info("[pingping] broadcast to {} player(s)", sent);
 	}
 
 	/**

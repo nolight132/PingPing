@@ -20,10 +20,7 @@ loom {
 	}
 }
 
-// One source tree, one file per game branch: 26.1 and 26.2 disagree on the submitNameTag signature.
 def mcBranch = project.minecraft_version.startsWith('26.1') ? '26.1' : '26.2'
-
-sourceSets.client.java.srcDir "src/client/java-${mcBranch}"
 
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"

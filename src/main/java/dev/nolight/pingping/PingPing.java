@@ -25,6 +25,12 @@ public class PingPing implements ModInitializer {
 	/** Maximum distance at which a player can mark an entity. */
 	public static final double MAX_PING_DISTANCE = 64.0;
 
+	/** Half-angle of the cone that snaps the ping onto a nearby entity, in degrees. */
+	public static final double SNAP_CONE_DEGREES = 6.0;
+
+	/** Beyond this distance from the marker a player no longer hears the ping. */
+	public static final double SOUND_RADIUS = 48.0;
+
 	public static Identifier id(String path) {
 		return Identifier.fromNamespaceAndPath(MOD_ID, path);
 	}
@@ -33,6 +39,5 @@ public class PingPing implements ModInitializer {
 	public void onInitialize() {
 		PingPayloads.register();
 		PingServer.register();
-		LOGGER.info("[pingping] main entrypoint initialised");
 	}
 }
