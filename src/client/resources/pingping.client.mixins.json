@@ -4,7 +4,9 @@
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"GameRendererInvoker",
-		"MinecraftPickMixin"
+		"LivingEntityRendererAccessor",
+		"MinecraftPickMixin",
+		"ModelPartAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

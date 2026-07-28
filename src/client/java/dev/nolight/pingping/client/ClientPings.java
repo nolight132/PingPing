@@ -17,6 +17,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
@@ -52,7 +53,7 @@ public final class ClientPings {
 
 	public static void register() {
 		ClientPlayNetworking.registerGlobalReceiver(PingBroadcastPayload.TYPE, (payload, context) ->
-				accept(context.client(), payload.target()));
+				accept(context.client(), payload.target(), payload.sender()));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			clientTick++;
@@ -65,7 +66,7 @@ public final class ClientPings {
 		});
 	}
 
-	private static void accept(Minecraft client, PingTarget target) {
+	private static void accept(Minecraft client, PingTarget target, java.util.UUID sender) {
 		ClientLevel level = client.level;
 		LocalPlayer player = client.player;
 
@@ -76,10 +77,29 @@ public final class ClientPings {
 		ACTIVE.removeIf(ping -> target.isEntity() && ping.entityId() == target.entityId());
 		ACTIVE.add(new ActivePing(target.entityId(), target.pos(), clientTick + PingConfig.get().lifetimeTicks()));
 
-		// Non-positional: every listener hears their own ping at their own ears, never someone else's from afar.
-		if (PingConfig.get().soundEnabled && target.pos().distanceToSqr(player.position()) <= PingConfig.get().soundRadius * PingConfig.get().soundRadius) {
+		if (PingConfig.get().soundEnabled && shouldHear(level, player, sender)) {
+			// Non-positional: played at the listener's own ears, so nobody hears anyone else's ping from afar.
 			client.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_PLING.value(), 1.6f, 0.5f));
 		}
+	}
+
+	/**
+	 * You always hear your own ping, however far away you marked something. Someone else's only carries if they
+	 * are within earshot of you — the radius is between the two players, not between you and the marker.
+	 */
+	private static boolean shouldHear(ClientLevel level, LocalPlayer player, java.util.UUID sender) {
+		if (player.getUUID().equals(sender)) {
+			return true;
+		}
+
+		Player origin = level.getPlayerByUUID(sender);
+
+		if (origin == null) {
+			return false;
+		}
+
+		double radius = PingConfig.get().soundRadius;
+		return origin.position().distanceToSqr(player.position()) <= radius * radius;
 	}
 
 	public static List<ActivePing> active() {

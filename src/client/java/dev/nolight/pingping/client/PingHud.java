@@ -25,7 +25,7 @@ public final class PingHud {
 	private static final int TEXT_COLOR = 0xFFFFE066;
 	private static final int BACKDROP_COLOR = 0x80000000;
 
-	private static final int PREVIEW_SIZE = 10;
+	private static final int PREVIEW_SIZE = 16;
 
 	/** How far the edge arrows sit from the screen border. */
 	private static final int EDGE_INSET = 26;

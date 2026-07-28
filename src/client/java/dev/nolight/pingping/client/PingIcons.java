@@ -1,9 +1,11 @@
 package dev.nolight.pingping.client;
 
-import java.util.HashMap;
-import java.util.Map;
+import dev.nolight.pingping.client.mixin.LivingEntityRendererAccessor;
+import dev.nolight.pingping.client.mixin.ModelPartAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.model.HeadedModel;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
@@ -11,7 +13,6 @@ import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -19,42 +20,15 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Flat head sprites, cropped straight out of each mob's own texture at draw time.
+ * Flat face sprites cut straight out of each mob's own texture at draw time.
  *
- * <p>Every downloadable mob-head pack found was all-rights-reserved, and the game already ships a texture for
- * every entity, so nothing is redistributed here: the crop reads whatever texture the entity's renderer is
- * already using, which also picks up variants and modded mobs for free.
+ * <p>No sprite pack is bundled: every downloadable set of mob-head icons found was all-rights-reserved, and
+ * nothing needs redistributing anyway. The UV rectangle is not guessed either — it is read off the front face of
+ * the model's own head part, so variants, overlays and modded mobs all come out right.
  */
 public final class PingIcons {
-	/**
-	 * Front face of a head box. Minecraft lays a box out as top/bottom on the first row and
-	 * right/front/left/back below, so the front face starts at {@code texOffs + depth}.
-	 */
-	private record Head(int u, int v, int width, int height, int textureWidth, int textureHeight) {
-	}
-
-	private static final Head HUMANOID = new Head(8, 8, 8, 8, 64, 64);
-
-	/** Keyed by registry path rather than EntityType constants, which moved class between 26.1 and 26.2. */
-	private static final Map<String, Head> HEADS = new HashMap<>();
-
-	static {
-		HEADS.put("creeper", new Head(8, 8, 8, 8, 64, 32));
-		HEADS.put("enderman", new Head(8, 8, 8, 8, 64, 32));
-		HEADS.put("pig", new Head(8, 8, 8, 8, 64, 32));
-		HEADS.put("cow", new Head(6, 6, 8, 8, 64, 32));
-		HEADS.put("mooshroom", new Head(6, 6, 8, 8, 64, 32));
-		HEADS.put("sheep", new Head(8, 8, 6, 6, 64, 32));
-		HEADS.put("chicken", new Head(3, 3, 4, 6, 64, 32));
-		HEADS.put("spider", new Head(40, 12, 8, 8, 64, 32));
-		HEADS.put("cave_spider", new Head(40, 12, 8, 8, 64, 32));
-		HEADS.put("wolf", new Head(6, 6, 6, 6, 64, 32));
-		HEADS.put("cat", new Head(5, 5, 5, 4, 64, 32));
-		HEADS.put("ocelot", new Head(5, 5, 5, 4, 64, 32));
-		HEADS.put("villager", new Head(8, 8, 8, 10, 64, 64));
-		HEADS.put("zombie_villager", new Head(8, 8, 8, 10, 64, 64));
-		HEADS.put("wandering_trader", new Head(8, 8, 8, 10, 64, 64));
-	}
+	/** A polygon counts as the face when its normal points at the viewer. */
+	private static final float FRONT_NORMAL_Z = -0.9f;
 
 	private PingIcons() {
 	}
@@ -69,11 +43,10 @@ public final class PingIcons {
 	}
 
 	/**
-	 * Draws the entity's face at {@code (x, y)}, top-left, at {@code size} pixels square.
+	 * Draws the entity's face into a {@code size} square with its top-left at {@code (x, y)}.
 	 *
 	 * @return whether anything was drawn
 	 */
-	@SuppressWarnings({"unchecked", "rawtypes"})
 	public static boolean face(GuiGraphicsExtractor graphics, Entity entity, EntityRenderState state, int x, int y,
 			int size) {
 		EntityRenderer<?, ?> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(entity);
@@ -82,25 +55,54 @@ public final class PingIcons {
 			return false;
 		}
 
+		if (!(((LivingEntityRendererAccessor) renderer).pingping$model() instanceof HeadedModel headed)) {
+			return false;
+		}
+
 		Identifier texture;
+		ModelPart head;
 
 		try {
 			texture = ((LivingEntityRenderer) renderer).getTextureLocation(living);
+			head = headed.getHead();
 		} catch (RuntimeException e) {
 			return false;
 		}
 
-		if (texture == null) {
+		if (texture == null || head == null) {
 			return false;
 		}
 
-		Head head = HEADS.getOrDefault(EntityType.getKey(entity.getType()).getPath(), HUMANOID);
+		boolean drawn = false;
 
-		graphics.blit(texture, x, y, size, size,
-				head.u() / (float) head.textureWidth(),
-				(head.u() + head.width()) / (float) head.textureWidth(),
-				head.v() / (float) head.textureHeight(),
-				(head.v() + head.height()) / (float) head.textureHeight());
-		return true;
+		// Cubes in declaration order, so a hat or fur overlay lands on top of the base face just as it does in world.
+		for (ModelPart.Cube cube : ((ModelPartAccessor) (Object) head).pingping$cubes()) {
+			for (ModelPart.Polygon polygon : cube.polygons) {
+				if (polygon.normal().z() > FRONT_NORMAL_Z) {
+					continue;
+				}
+
+				float u0 = Float.MAX_VALUE;
+				float u1 = -Float.MAX_VALUE;
+				float v0 = Float.MAX_VALUE;
+				float v1 = -Float.MAX_VALUE;
+
+				for (ModelPart.Vertex vertex : polygon.vertices()) {
+					u0 = Math.min(u0, vertex.u());
+					u1 = Math.max(u1, vertex.u());
+					v0 = Math.min(v0, vertex.v());
+					v1 = Math.max(v1, vertex.v());
+				}
+
+				if (u1 <= u0 || v1 <= v0) {
+					continue;
+				}
+
+				graphics.blit(texture, x, y, size, size, u0, u1, v0, v1);
+				drawn = true;
+			}
+		}
+
+		return drawn;
 	}
 }
