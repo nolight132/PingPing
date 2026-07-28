@@ -1,26 +1,60 @@
 package dev.nolight.pingping.client;
 
+import java.util.HashMap;
+import java.util.Map;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
 /**
- * The little preview above a marker. Mobs get a live portrait rather than a spawn egg: vanilla only ships seven
- * head items, so anything else would need third-party art and still miss modded mobs.
+ * Flat head sprites, cropped straight out of each mob's own texture at draw time.
+ *
+ * <p>Every downloadable mob-head pack found was all-rights-reserved, and the game already ships a texture for
+ * every entity, so nothing is redistributed here: the crop reads whatever texture the entity's renderer is
+ * already using, which also picks up variants and modded mobs for free.
  */
 public final class PingIcons {
-	/** Upright, facing the viewer, as vanilla poses the inventory preview. */
-	private static final Quaternionf UPRIGHT = new Quaternionf().rotateZ((float) Math.PI);
+	/**
+	 * Front face of a head box. Minecraft lays a box out as top/bottom on the first row and
+	 * right/front/left/back below, so the front face starts at {@code texOffs + depth}.
+	 */
+	private record Head(int u, int v, int width, int height, int textureWidth, int textureHeight) {
+	}
 
-	private static final Quaternionf TILT = new Quaternionf().rotateX(-0.12f);
+	private static final Head HUMANOID = new Head(8, 8, 8, 8, 64, 64);
+
+	private static final Map<EntityType<?>, Head> HEADS = new HashMap<>();
+
+	static {
+		HEADS.put(EntityTypes.CREEPER, new Head(8, 8, 8, 8, 64, 32));
+		HEADS.put(EntityTypes.ENDERMAN, new Head(8, 8, 8, 8, 64, 32));
+		HEADS.put(EntityTypes.PIG, new Head(8, 8, 8, 8, 64, 32));
+		HEADS.put(EntityTypes.COW, new Head(6, 6, 8, 8, 64, 32));
+		HEADS.put(EntityTypes.MOOSHROOM, new Head(6, 6, 8, 8, 64, 32));
+		HEADS.put(EntityTypes.SHEEP, new Head(8, 8, 6, 6, 64, 32));
+		HEADS.put(EntityTypes.CHICKEN, new Head(3, 3, 4, 6, 64, 32));
+		HEADS.put(EntityTypes.SPIDER, new Head(40, 12, 8, 8, 64, 32));
+		HEADS.put(EntityTypes.CAVE_SPIDER, new Head(40, 12, 8, 8, 64, 32));
+		HEADS.put(EntityTypes.WOLF, new Head(6, 6, 6, 6, 64, 32));
+		HEADS.put(EntityTypes.CAT, new Head(5, 5, 5, 4, 64, 32));
+		HEADS.put(EntityTypes.OCELOT, new Head(5, 5, 5, 4, 64, 32));
+		HEADS.put(EntityTypes.VILLAGER, new Head(8, 8, 8, 10, 64, 64));
+		HEADS.put(EntityTypes.ZOMBIE_VILLAGER, new Head(8, 8, 8, 10, 64, 64));
+		HEADS.put(EntityTypes.WANDERING_TRADER, new Head(8, 8, 8, 10, 64, 64));
+	}
 
 	private PingIcons() {
 	}
@@ -35,23 +69,38 @@ public final class PingIcons {
 	}
 
 	/**
-	 * Draws {@code entity} framed on its head inside the given box.
+	 * Draws the entity's face at {@code (x, y)}, top-left, at {@code size} pixels square.
 	 *
-	 * @param size edge length of the square the portrait is clipped to
+	 * @return whether anything was drawn
 	 */
-	public static void portrait(GuiGraphicsExtractor graphics, EntityRenderState state, int centreX, int centreY,
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public static boolean face(GuiGraphicsExtractor graphics, Entity entity, EntityRenderState state, int x, int y,
 			int size) {
-		float head = Math.max(state.eyeHeight, 0.25f);
-		// Fit roughly the top third of the entity, so tall mobs still read as a face and not a full body.
-		float scale = size / (head * 0.9f);
+		EntityRenderer<?, ?> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(entity);
 
-		graphics.entity(
-				state,
-				scale,
-				new Vector3f(0.0f, -head, 0.0f),
-				UPRIGHT,
-				TILT,
-				centreX - size / 2, centreY - size / 2,
-				centreX + size / 2, centreY + size / 2);
+		if (!(renderer instanceof LivingEntityRenderer) || !(state instanceof LivingEntityRenderState living)) {
+			return false;
+		}
+
+		Identifier texture;
+
+		try {
+			texture = ((LivingEntityRenderer) renderer).getTextureLocation(living);
+		} catch (RuntimeException e) {
+			return false;
+		}
+
+		if (texture == null) {
+			return false;
+		}
+
+		Head head = HEADS.getOrDefault(entity.getType(), HUMANOID);
+
+		graphics.blit(texture, x, y, size, size,
+				head.u() / (float) head.textureWidth(),
+				(head.u() + head.width()) / (float) head.textureWidth(),
+				head.v() / (float) head.textureHeight(),
+				(head.v() + head.height()) / (float) head.textureHeight());
+		return true;
 	}
 }

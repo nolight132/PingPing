@@ -25,7 +25,7 @@ public final class PingHud {
 	private static final int TEXT_COLOR = 0xFFFFE066;
 	private static final int BACKDROP_COLOR = 0x80000000;
 
-	private static final int PORTRAIT_SIZE = 16;
+	private static final int PREVIEW_SIZE = 10;
 
 	/** How far the edge arrows sit from the screen border. */
 	private static final int EDGE_INSET = 26;
@@ -90,16 +90,21 @@ public final class PingHud {
 		pose.popMatrix();
 
 		if (PingConfig.get().showIcons) {
-			drawPreview(graphics, ping, level, partialTick,
-					(int) x, (int) (y - (font.lineHeight * 2.0f + 4.0f) * scale - PORTRAIT_SIZE / 2.0f));
+			// Positioned on the matrix in floats: rounding the pixel here made previews twitch as the player moved.
+			pose.pushMatrix();
+			pose.translate(x, y - (font.lineHeight * 2.0f + 3.0f) * scale - PREVIEW_SIZE * scale * 0.5f);
+			pose.scale(scale, scale);
+			drawPreview(graphics, ping, level, partialTick);
+			pose.popMatrix();
 		}
 	}
 
 	/** Items and blocks show their icon; anything else alive shows a live portrait of itself. */
+	/** Blocks and dropped items show their icon; anything else shows its face cropped from its own texture. */
 	private static void drawPreview(GuiGraphicsExtractor graphics, ClientPings.ActivePing ping, ClientLevel level,
-			float partialTick, int x, int y) {
+			float partialTick) {
 		if (ping.entityId() == PingTarget.NO_ENTITY) {
-			blitItem(graphics, PingIcons.itemForBlock(level, ping.pos()), x, y);
+			blitItem(graphics, PingIcons.itemForBlock(level, ping.pos()));
 			return;
 		}
 
@@ -112,19 +117,27 @@ public final class PingHud {
 		ItemStack stack = PingIcons.itemFor(entity);
 
 		if (!stack.isEmpty()) {
-			blitItem(graphics, stack, x, y);
+			blitItem(graphics, stack);
 			return;
 		}
 
 		EntityRenderState state = Minecraft.getInstance().getEntityRenderDispatcher()
 				.extractEntity(entity, partialTick);
-		PingIcons.portrait(graphics, state, x, y, PORTRAIT_SIZE);
+		PingIcons.face(graphics, entity, state, -PREVIEW_SIZE / 2, -PREVIEW_SIZE / 2, PREVIEW_SIZE);
 	}
 
-	private static void blitItem(GuiGraphicsExtractor graphics, ItemStack stack, int x, int y) {
-		if (!stack.isEmpty()) {
-			graphics.item(stack, x - 8, y - 8);
+	/** Item icons are authored at 16px, so shrink them to the preview box. */
+	private static void blitItem(GuiGraphicsExtractor graphics, ItemStack stack) {
+		if (stack.isEmpty()) {
+			return;
 		}
+
+		float shrink = PREVIEW_SIZE / 16.0f;
+		Matrix3x2fStack pose = graphics.pose();
+		pose.pushMatrix();
+		pose.scale(shrink, shrink);
+		graphics.item(stack, -8, -8);
+		pose.popMatrix();
 	}
 
 	private static void drawEdgeArrow(GuiGraphicsExtractor graphics, Font font, Vector4f screen, int width,

@@ -27,7 +27,9 @@ import net.minecraft.world.phys.Vec3;
 
 /** Tracks live pings and turns middle clicks into ping requests. */
 public final class ClientPings {
-	private static final Predicate<Entity> PINGABLE = entity -> !entity.isSpectator() && entity.isPickable();
+	// Not Entity#isPickable: that is false for anything non-living, which silently excluded dropped items,
+	// boats and minecarts from ever being a ping target.
+	private static final Predicate<Entity> PINGABLE = entity -> !entity.isSpectator() && !entity.isRemoved();
 
 	private static final List<ActivePing> ACTIVE = new ArrayList<>();
 
