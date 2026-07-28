@@ -25,8 +25,6 @@ public final class PingHud {
 	private static final int TEXT_COLOR = 0xFFFFE066;
 	private static final int BACKDROP_COLOR = 0x80000000;
 
-	private static final int PREVIEW_SIZE = 16;
-
 	/** How far the edge arrows sit from the screen border. */
 	private static final int EDGE_INSET = 26;
 
@@ -92,7 +90,7 @@ public final class PingHud {
 		if (PingConfig.get().showIcons) {
 			// Positioned on the matrix in floats: rounding the pixel here made previews twitch as the player moved.
 			pose.pushMatrix();
-			pose.translate(x, y - (font.lineHeight * 2.0f + 3.0f) * scale - PREVIEW_SIZE * scale * 0.5f);
+			pose.translate(x, y - (font.lineHeight * 2.0f + 3.0f) * scale - PingConfig.get().previewSize * scale * 0.5f);
 			pose.scale(scale, scale);
 			drawPreview(graphics, ping, level, partialTick);
 			pose.popMatrix();
@@ -123,7 +121,8 @@ public final class PingHud {
 
 		EntityRenderState state = Minecraft.getInstance().getEntityRenderDispatcher()
 				.extractEntity(entity, partialTick);
-		PingIcons.face(graphics, entity, state, -PREVIEW_SIZE / 2, -PREVIEW_SIZE / 2, PREVIEW_SIZE);
+		int size = PingConfig.get().previewSize;
+		PingIcons.face(graphics, entity, state, -size / 2, -size / 2, size);
 	}
 
 	/** Item icons are authored at 16px, so shrink them to the preview box. */
@@ -132,7 +131,7 @@ public final class PingHud {
 			return;
 		}
 
-		float shrink = PREVIEW_SIZE / 16.0f;
+		float shrink = PingConfig.get().previewSize / 16.0f;
 		Matrix3x2fStack pose = graphics.pose();
 		pose.pushMatrix();
 		pose.scale(shrink, shrink);

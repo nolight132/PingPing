@@ -3,11 +3,16 @@
 	"id": "pingping",
 	"version": "${version}",
 	"name": "PingPing",
-	"description": "Fortnite-style middle-click pings that attach to entities and are visible to everyone on the server.",
+	"description": "A simple multiplayer ping system for Minecraft",
 	"authors": [
 		"nolight"
 	],
 	"license": "MIT",
+	"icon": "assets/pingping/icon.png",
+	"contact": {
+		"sources": "https://github.com/nolight132/PingPing",
+		"issues": "https://github.com/nolight132/PingPing/issues"
+	},
 	"environment": "*",
 	"entrypoints": {
 		"main": [

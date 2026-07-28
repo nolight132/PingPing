@@ -38,6 +38,12 @@ dependencies {
 	clientCompileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
 }
 
+jar {
+	from("LICENSE") {
+		rename { "${it}_${project.base.archivesName.get()}" }
+	}
+}
+
 processResources {
 	def version = project.version
 	def mcDependency = mcBranch == '26.1' ? '>=26.1 <26.2-' : '>=26.2 <26.3-'

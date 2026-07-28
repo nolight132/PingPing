@@ -33,6 +33,9 @@ public final class PingConfig {
 	public boolean showEdgeArrows = true;
 	public double markerScale = 0.75;
 
+	/** Edge length in pixels of the preview above a marker. */
+	public int previewSize = 12;
+
 	public static PingConfig get() {
 		if (instance == null) {
 			instance = load();
