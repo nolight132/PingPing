@@ -17,6 +17,8 @@ the mod installed sees the marker for a few seconds.
 | Middle click         | Mark the entity you are looking at. With nothing alive in sight, vanilla pick block gets the click, and failing that a bare marker lands on the exact spot aimed at. |
 | Sneak + middle click | Mark the block you are looking at, previewed with its item icon.                                                                                                     |
 
+Each player's markers carry their own colour, assigned from their UUID or picked in the settings.
+
 ## Building
 
 ```sh
