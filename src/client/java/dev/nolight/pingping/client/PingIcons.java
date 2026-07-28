@@ -12,7 +12,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -36,24 +35,25 @@ public final class PingIcons {
 
 	private static final Head HUMANOID = new Head(8, 8, 8, 8, 64, 64);
 
-	private static final Map<EntityType<?>, Head> HEADS = new HashMap<>();
+	/** Keyed by registry path rather than EntityType constants, which moved class between 26.1 and 26.2. */
+	private static final Map<String, Head> HEADS = new HashMap<>();
 
 	static {
-		HEADS.put(EntityTypes.CREEPER, new Head(8, 8, 8, 8, 64, 32));
-		HEADS.put(EntityTypes.ENDERMAN, new Head(8, 8, 8, 8, 64, 32));
-		HEADS.put(EntityTypes.PIG, new Head(8, 8, 8, 8, 64, 32));
-		HEADS.put(EntityTypes.COW, new Head(6, 6, 8, 8, 64, 32));
-		HEADS.put(EntityTypes.MOOSHROOM, new Head(6, 6, 8, 8, 64, 32));
-		HEADS.put(EntityTypes.SHEEP, new Head(8, 8, 6, 6, 64, 32));
-		HEADS.put(EntityTypes.CHICKEN, new Head(3, 3, 4, 6, 64, 32));
-		HEADS.put(EntityTypes.SPIDER, new Head(40, 12, 8, 8, 64, 32));
-		HEADS.put(EntityTypes.CAVE_SPIDER, new Head(40, 12, 8, 8, 64, 32));
-		HEADS.put(EntityTypes.WOLF, new Head(6, 6, 6, 6, 64, 32));
-		HEADS.put(EntityTypes.CAT, new Head(5, 5, 5, 4, 64, 32));
-		HEADS.put(EntityTypes.OCELOT, new Head(5, 5, 5, 4, 64, 32));
-		HEADS.put(EntityTypes.VILLAGER, new Head(8, 8, 8, 10, 64, 64));
-		HEADS.put(EntityTypes.ZOMBIE_VILLAGER, new Head(8, 8, 8, 10, 64, 64));
-		HEADS.put(EntityTypes.WANDERING_TRADER, new Head(8, 8, 8, 10, 64, 64));
+		HEADS.put("creeper", new Head(8, 8, 8, 8, 64, 32));
+		HEADS.put("enderman", new Head(8, 8, 8, 8, 64, 32));
+		HEADS.put("pig", new Head(8, 8, 8, 8, 64, 32));
+		HEADS.put("cow", new Head(6, 6, 8, 8, 64, 32));
+		HEADS.put("mooshroom", new Head(6, 6, 8, 8, 64, 32));
+		HEADS.put("sheep", new Head(8, 8, 6, 6, 64, 32));
+		HEADS.put("chicken", new Head(3, 3, 4, 6, 64, 32));
+		HEADS.put("spider", new Head(40, 12, 8, 8, 64, 32));
+		HEADS.put("cave_spider", new Head(40, 12, 8, 8, 64, 32));
+		HEADS.put("wolf", new Head(6, 6, 6, 6, 64, 32));
+		HEADS.put("cat", new Head(5, 5, 5, 4, 64, 32));
+		HEADS.put("ocelot", new Head(5, 5, 5, 4, 64, 32));
+		HEADS.put("villager", new Head(8, 8, 8, 10, 64, 64));
+		HEADS.put("zombie_villager", new Head(8, 8, 8, 10, 64, 64));
+		HEADS.put("wandering_trader", new Head(8, 8, 8, 10, 64, 64));
 	}
 
 	private PingIcons() {
@@ -94,7 +94,7 @@ public final class PingIcons {
 			return false;
 		}
 
-		Head head = HEADS.getOrDefault(entity.getType(), HUMANOID);
+		Head head = HEADS.getOrDefault(EntityType.getKey(entity.getType()).getPath(), HUMANOID);
 
 		graphics.blit(texture, x, y, size, size,
 				head.u() / (float) head.textureWidth(),
