@@ -68,10 +68,12 @@ public final class PingServer {
 	private static final class Budget {
 		private float charges = PingPing.MAX_CHARGES;
 		private long refilledAt;
-		private long lastPing = Long.MIN_VALUE;
+		private long lastPing;
 
 		Budget(long tick) {
 			this.refilledAt = tick;
+			// Not Long.MIN_VALUE: `tick - lastPing` would overflow and reject every ping forever.
+			this.lastPing = tick - PingPing.MIN_PING_INTERVAL_TICKS;
 		}
 
 		boolean tryConsume(long tick) {

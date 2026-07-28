@@ -16,11 +16,11 @@ public class PingPing implements ModInitializer {
 	/** Pings a player may fire back to back before the bucket runs dry. */
 	public static final int MAX_CHARGES = 5;
 
-	/** Ticks needed to regenerate one charge. */
-	public static final int CHARGE_REFILL_TICKS = 30;
+	/** Ticks needed to regenerate one charge, so an emptied bucket is full again after five seconds. */
+	public static final int CHARGE_REFILL_TICKS = 20;
 
 	/** Hard floor between two pings, so a single burst cannot be dumped in one tick. */
-	public static final int MIN_PING_INTERVAL_TICKS = 4;
+	public static final int MIN_PING_INTERVAL_TICKS = 2;
 
 	/** Maximum distance at which a player can mark an entity. */
 	public static final double MAX_PING_DISTANCE = 64.0;
