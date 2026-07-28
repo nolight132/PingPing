@@ -1,43 +1,35 @@
 {
-	"schemaVersion": 1,
-	"id": "pingping",
-	"version": "${version}",
-	"name": "PingPing",
-	"description": "A simple multiplayer ping system for Minecraft",
-	"authors": [
-		"nolight"
-	],
-	"license": "MIT",
-	"icon": "assets/pingping/icon.png",
-	"contact": {
-		"sources": "https://github.com/nolight132/PingPing",
-		"issues": "https://github.com/nolight132/PingPing/issues"
-	},
-	"environment": "*",
-	"entrypoints": {
-		"main": [
-			"dev.nolight.pingping.PingPing"
-		],
-		"client": [
-			"dev.nolight.pingping.client.PingPingClient"
-		],
-		"modmenu": [
-			"dev.nolight.pingping.client.PingModMenu"
-		]
-	},
-	"mixins": [
-		{
-			"config": "pingping.client.mixins.json",
-			"environment": "client"
-		}
-	],
-	"depends": {
-		"fabricloader": ">=0.19.3",
-		"minecraft": "${mc_dependency}",
-		"java": ">=25",
-		"fabric-api": "*"
-	},
-	"recommends": {
-		"yet_another_config_lib_v3": ">=3.9.0"
-	}
+    "schemaVersion": 1,
+    "id": "pingping",
+    "version": "${version}",
+    "name": "PingPing",
+    "description": "A simple multiplayer ping system for Minecraft",
+    "authors": ["nolight"],
+    "license": "MIT",
+    "icon": "assets/pingping/icon.png",
+    "contact": {
+        "sources": "https://github.com/nolight132/PingPing",
+        "issues": "https://github.com/nolight132/PingPing/issues"
+    },
+    "environment": "*",
+    "entrypoints": {
+        "main": ["dev.nolight.pingping.PingPing"],
+        "client": ["dev.nolight.pingping.client.PingPingClient"],
+        "modmenu": ["dev.nolight.pingping.client.PingModMenu"]
+    },
+    "mixins": [
+        {
+            "config": "pingping.client.mixins.json",
+            "environment": "client"
+        }
+    ],
+    "depends": {
+        "fabricloader": ">=0.19.3",
+        "minecraft": "${mc_dependency}",
+        "java": ">=25",
+        "fabric-api": "*"
+    },
+    "recommends": {
+        "yet_another_config_lib_v3": ">=3.9.0"
+    }
 }
