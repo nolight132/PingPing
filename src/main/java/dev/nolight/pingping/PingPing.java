@@ -28,5 +28,6 @@ public class PingPing implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		PingPayloads.register();
+		PingServer.register();
 	}
 }
