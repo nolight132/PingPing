@@ -45,6 +45,12 @@ public final class PingConfig {
 	/** Edge length in pixels of the preview above a marker. */
 	public int previewSize = 12;
 
+	/** Let the server hand out a colour based on your UUID instead of using {@link #markerColor}. */
+	public boolean autoMarkerColor = true;
+
+	/** Your own marker colour as 24-bit RGB, used when {@link #autoMarkerColor} is off. */
+	public int markerColor = 0xFFE066;
+
 	public static PingConfig get() {
 		if (instance == null) {
 			instance = load();

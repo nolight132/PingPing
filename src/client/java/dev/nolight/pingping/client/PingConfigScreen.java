@@ -6,10 +6,12 @@ import dev.isxander.yacl3.api.OptionDescription;
 import dev.isxander.yacl3.api.OptionGroup;
 import dev.isxander.yacl3.api.YetAnotherConfigLib;
 import dev.isxander.yacl3.api.controller.BooleanControllerBuilder;
+import dev.isxander.yacl3.api.controller.ColorControllerBuilder;
 import dev.isxander.yacl3.api.controller.DoubleSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
 import dev.nolight.pingping.PingConfig;
 import net.minecraft.client.gui.screens.Screen;
+import java.awt.Color;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import net.minecraft.network.chat.Component;
@@ -96,6 +98,18 @@ public final class PingConfigScreen {
 						.option(doubleSlider("refill", DEFAULTS.refillSeconds, () -> config.refillSeconds,
 								value -> config.refillSeconds = value, 1.0, 60.0, 1.0))
 						.build())
+				.build();
+	}
+
+	/** Stored as packed RGB but edited as a colour, so the binding converts either way. */
+	private static Option<Color> colour(PingConfig config) {
+		return Option.<Color>createBuilder()
+				.name(text("option.colour"))
+				.description(OptionDescription.of(text("option.colour.desc")))
+				.binding(new Color(DEFAULTS.markerColor),
+						() -> new Color(config.markerColor & 0xFFFFFF),
+						value -> config.markerColor = value.getRGB() & 0xFFFFFF)
+				.controller(option -> ColorControllerBuilder.create(option).allowAlpha(false))
 				.build();
 	}
 

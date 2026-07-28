@@ -22,7 +22,6 @@ public final class PingHud {
 	private static final Component DIAMOND = Component.literal("◆");
 	private static final Component ARROW = Component.literal("➤");
 
-	private static final int TEXT_COLOR = 0xFFFFE066;
 	private static final int BACKDROP_COLOR = 0x80000000;
 
 	/** How far the edge arrows sit from the screen border. */
@@ -65,10 +64,12 @@ public final class PingHud {
 						&& screen.x >= EDGE_INSET && screen.x <= width - EDGE_INSET
 						&& screen.y >= EDGE_INSET && screen.y <= height - EDGE_INSET;
 
+				int color = 0xFF000000 | ping.color();
+
 				if (onScreen) {
-					drawMarker(graphics, font, screen.x, screen.y, distance, ping, level, partialTick);
+					drawMarker(graphics, font, screen.x, screen.y, distance, ping, level, partialTick, color);
 				} else if (PingConfig.get().showEdgeArrows) {
-					drawEdgeArrow(graphics, font, screen, width, height, distance);
+					drawEdgeArrow(graphics, font, screen, width, height, distance, color);
 				}
 			}
 		});
@@ -76,15 +77,15 @@ public final class PingHud {
 
 	/** Diamond sits on the target, distance rides above it, preview above that. */
 	private static void drawMarker(GuiGraphicsExtractor graphics, Font font, float x, float y, Component distance,
-			ClientPings.ActivePing ping, ClientLevel level, float partialTick) {
+			ClientPings.ActivePing ping, ClientLevel level, float partialTick, int color) {
 		float scale = (float) PingConfig.get().markerScale;
 		Matrix3x2fStack pose = graphics.pose();
 
 		pose.pushMatrix();
 		pose.translate(x, y);
 		pose.scale(scale, scale);
-		graphics.centeredText(font, DIAMOND, 0, -font.lineHeight / 2, TEXT_COLOR);
-		backdrop(graphics, font, distance, 0, -font.lineHeight - font.lineHeight / 2 - 2);
+		graphics.centeredText(font, DIAMOND, 0, -font.lineHeight / 2, color);
+		backdrop(graphics, font, distance, 0, -font.lineHeight - font.lineHeight / 2 - 2, color);
 		pose.popMatrix();
 
 		if (PingConfig.get().showIcons) {
@@ -145,7 +146,7 @@ public final class PingHud {
 	}
 
 	private static void drawEdgeArrow(GuiGraphicsExtractor graphics, Font font, Vector4f screen, int width,
-			int height, Component distance) {
+			int height, Component distance, int color) {
 		float centreX = width / 2.0f;
 		float centreY = height / 2.0f;
 
@@ -183,19 +184,20 @@ public final class PingHud {
 		pose.rotate((float) Math.atan2(dirY, dirX));
 		pose.scale((float) PingConfig.get().markerScale, (float) PingConfig.get().markerScale);
 		// The glyph points right at zero rotation.
-		graphics.centeredText(font, ARROW, 0, -font.lineHeight / 2, TEXT_COLOR);
+		graphics.centeredText(font, ARROW, 0, -font.lineHeight / 2, color);
 		pose.popMatrix();
 
 		pose.pushMatrix();
 		pose.translate(x - dirX * 14.0f, y - dirY * 14.0f);
 		pose.scale((float) PingConfig.get().markerScale, (float) PingConfig.get().markerScale);
-		backdrop(graphics, font, distance, 0, -font.lineHeight / 2);
+		backdrop(graphics, font, distance, 0, -font.lineHeight / 2, color);
 		pose.popMatrix();
 	}
 
-	private static void backdrop(GuiGraphicsExtractor graphics, Font font, Component text, int centreX, int y) {
+	private static void backdrop(GuiGraphicsExtractor graphics, Font font, Component text, int centreX, int y,
+			int color) {
 		int half = font.width(text) / 2;
 		graphics.fill(centreX - half - 2, y - 1, centreX + half + 2, y + font.lineHeight, BACKDROP_COLOR);
-		graphics.centeredText(font, text, centreX, y, TEXT_COLOR);
+		graphics.centeredText(font, text, centreX, y, color);
 	}
 }

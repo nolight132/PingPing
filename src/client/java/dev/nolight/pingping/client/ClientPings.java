@@ -40,7 +40,7 @@ public final class ClientPings {
 	}
 
 	/** A ping being displayed. {@code entityId} is {@link PingTarget#NO_ENTITY} for a plain world position. */
-	public record ActivePing(int entityId, Vec3 pos, boolean block, long expiresAt) {
+	public record ActivePing(int entityId, Vec3 pos, boolean block, int color, long expiresAt) {
 		public Vec3 currentPos(ClientLevel level, float partialTick) {
 			if (entityId == PingTarget.NO_ENTITY) {
 				return pos;
@@ -53,7 +53,7 @@ public final class ClientPings {
 
 	public static void register() {
 		ClientPlayNetworking.registerGlobalReceiver(PingBroadcastPayload.TYPE,
-				(payload, context) -> accept(context.client(), payload.target(), payload.sender()));
+				(payload, context) -> accept(context.client(), payload.target(), payload.sender(), payload.color()));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			clientTick++;
@@ -66,7 +66,7 @@ public final class ClientPings {
 		});
 	}
 
-	private static void accept(Minecraft client, PingTarget target, java.util.UUID sender) {
+	private static void accept(Minecraft client, PingTarget target, java.util.UUID sender, int color) {
 		ClientLevel level = client.level;
 		LocalPlayer player = client.player;
 
@@ -75,7 +75,7 @@ public final class ClientPings {
 		}
 
 		ACTIVE.removeIf(ping -> target.isEntity() && ping.entityId() == target.entityId());
-		ACTIVE.add(new ActivePing(target.entityId(), target.pos(), target.block(),
+		ACTIVE.add(new ActivePing(target.entityId(), target.pos(), target.block(), color,
 				clientTick + PingConfig.get().lifetimeTicks()));
 
 		if (PingConfig.get().soundEnabled && shouldHear(level, player, sender)) {
@@ -103,6 +103,12 @@ public final class ClientPings {
 		return origin.position().distanceToSqr(player.position()) <= radius * radius;
 	}
 
+	/** The colour to ask for, or the sentinel that lets the server hand one out by UUID. */
+	private static int outgoingColor() {
+		PingConfig config = PingConfig.get();
+		return config.autoMarkerColor ? PingPing.AUTO_COLOR : PingPing.sanitiseColor(config.markerColor);
+	}
+
 	public static List<ActivePing> active() {
 		return ACTIVE;
 	}
@@ -127,7 +133,7 @@ public final class ClientPings {
 			PingTarget block = worldTarget(player, level, true);
 
 			if (block != null) {
-				ClientPlayNetworking.send(new PingRequestPayload(block));
+				ClientPlayNetworking.send(new PingRequestPayload(block, outgoingColor()));
 			}
 
 			return true;
@@ -136,7 +142,8 @@ public final class ClientPings {
 		Entity entity = findEntity(player, level);
 
 		if (entity != null) {
-			ClientPlayNetworking.send(new PingRequestPayload(PingTarget.ofEntity(entity.getId(), entity.position())));
+			ClientPlayNetworking.send(
+					new PingRequestPayload(PingTarget.ofEntity(entity.getId(), entity.position()), outgoingColor()));
 			return true;
 		}
 
@@ -150,7 +157,7 @@ public final class ClientPings {
 				: worldTarget(player, level, true);
 
 		if (fallback != null) {
-			ClientPlayNetworking.send(new PingRequestPayload(fallback));
+			ClientPlayNetworking.send(new PingRequestPayload(fallback, outgoingColor()));
 		}
 
 		return true;
