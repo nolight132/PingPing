@@ -1,7 +1,8 @@
 package dev.nolight.pingping.client;
 
-import dev.nolight.pingping.client.mixin.LivingEntityRendererAccessor;
-import dev.nolight.pingping.client.mixin.ModelPartAccessor;
+import java.lang.reflect.Field;
+import java.util.List;
+import dev.nolight.pingping.PingPing;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.model.HeadedModel;
@@ -25,10 +26,27 @@ import net.minecraft.world.phys.Vec3;
  * <p>No sprite pack is bundled: every downloadable set of mob-head icons found was all-rights-reserved, and
  * nothing needs redistributing anyway. The UV rectangle is not guessed either — it is read off the front face of
  * the model's own head part, so variants, overlays and modded mobs all come out right.
+ *
+ * <p>The two private fields are reached by reflection rather than mixin accessors on purpose: a decoration must
+ * never take the game down with it, and an @Accessor that fails to bind is a hard crash at class-load time.
  */
 public final class PingIcons {
 	/** A polygon counts as the face when its normal points at the viewer. */
 	private static final float FRONT_NORMAL_Z = -0.9f;
+
+	private static final Field MODEL_FIELD = field(LivingEntityRenderer.class, "model");
+	private static final Field CUBES_FIELD = field(ModelPart.class, "cubes");
+
+	private static Field field(Class<?> owner, String name) {
+		try {
+			Field found = owner.getDeclaredField(name);
+			found.setAccessible(true);
+			return found;
+		} catch (ReflectiveOperationException | RuntimeException e) {
+			PingPing.LOGGER.warn("[pingping] no {}#{}, face previews disabled", owner.getSimpleName(), name);
+			return null;
+		}
+	}
 
 	private PingIcons() {
 	}
@@ -55,28 +73,43 @@ public final class PingIcons {
 			return false;
 		}
 
-		if (!(((LivingEntityRendererAccessor) renderer).pingping$model() instanceof HeadedModel headed)) {
+		if (MODEL_FIELD == null || CUBES_FIELD == null) {
 			return false;
 		}
 
 		Identifier texture;
 		ModelPart head;
+		List<?> cubes;
 
 		try {
+			if (!(MODEL_FIELD.get(renderer) instanceof HeadedModel headed)) {
+				return false;
+			}
+
 			texture = ((LivingEntityRenderer) renderer).getTextureLocation(living);
 			head = headed.getHead();
-		} catch (RuntimeException e) {
+
+			if (texture == null || head == null) {
+				return false;
+			}
+
+			cubes = (List<?>) CUBES_FIELD.get(head);
+		} catch (ReflectiveOperationException | RuntimeException e) {
 			return false;
 		}
 
-		if (texture == null || head == null) {
+		if (cubes == null) {
 			return false;
 		}
 
 		boolean drawn = false;
 
 		// Cubes in declaration order, so a hat or fur overlay lands on top of the base face just as it does in world.
-		for (ModelPart.Cube cube : ((ModelPartAccessor) (Object) head).pingping$cubes()) {
+		for (Object raw : cubes) {
+			if (!(raw instanceof ModelPart.Cube cube)) {
+				continue;
+			}
+
 			for (ModelPart.Polygon polygon : cube.polygons) {
 				if (polygon.normal().z() > FRONT_NORMAL_Z) {
 					continue;
