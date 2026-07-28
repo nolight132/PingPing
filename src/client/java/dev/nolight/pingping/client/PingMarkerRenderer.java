@@ -1,6 +1,7 @@
 package dev.nolight.pingping.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import dev.nolight.pingping.client.compat.NameTagSubmitter;
 import java.util.Map;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.ChatFormatting;
@@ -55,13 +56,13 @@ public final class PingMarkerRenderer {
 
 				poseStack.pushPose();
 				poseStack.translate(pos.x, pos.y, pos.z);
-				collector.submitNameTag(
+				NameTagSubmitter.submit(
+						collector,
 						poseStack,
 						new Vec3(0.0, entity.getBbHeight() + HEAD_CLEARANCE, 0.0),
-						0,
 						MARKER,
-						true,
 						LightCoordsUtil.FULL_BRIGHT,
+						pos.lengthSqr(),
 						camera);
 				poseStack.popPose();
 			}

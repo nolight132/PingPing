@@ -6,7 +6,7 @@ version = project.mod_version
 group = project.maven_group
 
 base {
-	archivesName = 'pingping'
+	archivesName = "pingping-${project.minecraft_version}"
 }
 
 loom {
@@ -20,6 +20,11 @@ loom {
 	}
 }
 
+// One source tree, one file per game branch: 26.1 and 26.2 disagree on the submitNameTag signature.
+def mcBranch = project.minecraft_version.startsWith('26.1') ? '26.1' : '26.2'
+
+sourceSets.client.java.srcDir "src/client/java-${mcBranch}"
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
@@ -28,10 +33,12 @@ dependencies {
 
 processResources {
 	def version = project.version
+	def mcDependency = mcBranch == '26.1' ? '>=26.1 <26.2-' : '>=26.2 <26.3-'
 	inputs.property "version", version
+	inputs.property "mcDependency", mcDependency
 
 	filesMatching("fabric.mod.json") {
-		expand "version": version
+		expand "version": version, "mc_dependency": mcDependency
 	}
 }
 

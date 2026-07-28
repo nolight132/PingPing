@@ -18,7 +18,13 @@ installed sees the marker for a few seconds.
 ## Building
 
 ```sh
-./gradlew build
+./gradlew build                                                              # 26.2
+./gradlew build -Pminecraft_version=26.1.2 -Pfabric_api_version=0.155.2+26.1.2   # 26.1
 ```
 
-The jar lands in `build/libs/`.
+Jars land in `build/libs/` named per game version. Gradle downloads a JDK 25 toolchain on its own, so no
+system JDK is required.
+
+26.1 and 26.2 need separate jars: `SubmitNodeCollector#submitNameTag` lost its camera-distance argument in
+26.2. That single call is the only divergence, and it lives in `src/client/java-26.1` and
+`src/client/java-26.2`; everything else is shared.
