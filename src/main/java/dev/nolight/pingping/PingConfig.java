@@ -48,11 +48,9 @@ public final class PingConfig {
 
 	public boolean scaleWithDistance = true;
 
-	public double scaleReferenceDistance = 40.0;
-
 	public double minMarkerScale = 1.0;
 
-	public double maxMarkerScale = 3.0;
+	public double maxMarkerScale = 2.0;
 
 	/** Edge length in pixels of the preview above a marker. */
 	public int previewSize = 12;

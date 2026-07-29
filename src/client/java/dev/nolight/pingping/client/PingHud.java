@@ -9,6 +9,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
@@ -56,8 +57,8 @@ public final class PingHud {
 					continue;
 				}
 
-				float away = (float) world.distanceTo(player.getEyePosition());
-				Component distance = Component.translatable("pingping.marker.distance", Math.round(away));
+				Component distance = Component.translatable("pingping.marker.distance",
+						Math.round(world.distanceTo(player.getEyePosition())));
 
 				boolean onScreen = screen.z > 0.0f && screen.w != 0.0f
 						&& screen.x >= EDGE_INSET && screen.x <= width - EDGE_INSET
@@ -67,7 +68,7 @@ public final class PingHud {
 
 				if (onScreen) {
 					drawMarker(graphics, font, screen.x, screen.y, distance, ping, level, partialTick, color,
-							(float) PingConfig.get().markerScale * distanceFactor(away));
+							(float) PingConfig.get().markerScale * distanceFactor(world, height));
 				} else if (PingConfig.get().showEdgeArrows) {
 					drawEdgeArrow(graphics, font, screen, width, height, distance, color);
 				}
@@ -75,15 +76,15 @@ public final class PingHud {
 		});
 	}
 
-	private static float distanceFactor(float away) {
+	private static float distanceFactor(Vec3 world, int guiHeight) {
 		PingConfig config = PingConfig.get();
 
 		if (!config.scaleWithDistance) {
 			return 1.0f;
 		}
 
-		double factor = config.scaleReferenceDistance / Math.max(away, 0.1f);
-		return (float) Math.min(config.maxMarkerScale, Math.max(config.minMarkerScale, factor));
+		float perspective = CameraCapture.pixelsPerBlock(world, guiHeight) * EntityRenderer.NAMETAG_SCALE;
+		return (float) Math.min(config.maxMarkerScale, Math.max(config.minMarkerScale, perspective));
 	}
 
 	private static void drawMarker(GuiGraphicsExtractor graphics, Font font, float x, float y, Component distance,
