@@ -19,7 +19,9 @@ import org.joml.Vector3f;
 public final class PingIcons {
 	private static final float HEAD_SPAN = 0.45f;
 
-	private static final float MIN_HEAD_SPAN = 0.3f;
+	private static final float MIN_SPAN = 0.55f;
+
+	private static final float FULL_BODY_MARGIN = 1.15f;
 
 	private PingIcons() {
 	}
@@ -64,10 +66,16 @@ public final class PingIcons {
 
 		float height = Math.max(state.boundingBoxHeight, 0.1f);
 		boolean fullBody = PingConfig.get().previewFullBody || !(state instanceof LivingEntityRenderState);
-		float anchor = fullBody ? height / 2.0f : Math.min(state.eyeHeight / modelScale, height);
-		float span = fullBody
-				? Math.max(state.boundingBoxWidth, height)
-				: Mth.clamp(height * HEAD_SPAN, MIN_HEAD_SPAN, height);
+		float span;
+		float anchor;
+
+		if (fullBody) {
+			span = Math.max(state.boundingBoxWidth, height) * FULL_BODY_MARGIN;
+			anchor = height / 2.0f;
+		} else {
+			span = Math.max(height * HEAD_SPAN, Math.min(MIN_SPAN, height));
+			anchor = Mth.clamp(Math.min(state.eyeHeight / modelScale, height - span * 0.4f), span * 0.5f, height);
+		}
 
 		graphics.entity(state, (x1 - x0) / span, new Vector3f(0.0f, anchor, 0.0f),
 				new Quaternionf().rotateZ((float) Math.PI), null, x0, y0, x1, y1);
