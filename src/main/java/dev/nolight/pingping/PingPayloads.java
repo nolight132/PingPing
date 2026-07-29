@@ -8,6 +8,7 @@ public final class PingPayloads {
 
 	public static void register() {
 		PayloadTypeRegistry.serverboundPlay().register(PingRequestPayload.TYPE, PingRequestPayload.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(PingColorPayload.TYPE, PingColorPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(PingBroadcastPayload.TYPE, PingBroadcastPayload.CODEC);
 	}
 }

@@ -19,13 +19,20 @@ public final class PingServer {
 
 	public static void register() {
 		ServerPlayNetworking.registerGlobalReceiver(PingRequestPayload.TYPE,
-				(payload, context) -> handle(context.player(), payload.target(), payload.customColor()));
+				(payload, context) -> handle(context.player(), payload.target()));
 
-		ServerPlayConnectionEvents.DISCONNECT
-				.register((handler, server) -> BUDGETS.remove(handler.getPlayer().getUUID()));
+		ServerPlayNetworking.registerGlobalReceiver(PingColorPayload.TYPE,
+				(payload, context) -> PingColors.choose(context.player(), payload.color()));
+
+		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> PingColors.join(handler.getPlayer()));
+
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+			BUDGETS.remove(handler.getPlayer().getUUID());
+			PingColors.leave(handler.getPlayer().getUUID());
+		});
 	}
 
-	private static void handle(ServerPlayer player, PingTarget target, int requestedColor) {
+	private static void handle(ServerPlayer player, PingTarget target) {
 		ServerLevel level = player.level();
 		Vec3 spot = target.pos();
 
@@ -52,11 +59,7 @@ public final class PingServer {
 			return;
 		}
 
-		int customColor = requestedColor == PingPing.AUTO_COLOR
-				? PingPing.AUTO_COLOR
-				: PingPing.sanitiseColor(requestedColor);
-		PingBroadcastPayload broadcast = new PingBroadcastPayload(target, player.getUUID(),
-				PingColors.locatorBar(player), customColor);
+		PingBroadcastPayload broadcast = new PingBroadcastPayload(target, player.getUUID(), PingColors.of(player));
 
 		for (ServerPlayer receiver : PlayerLookup.all(level.getServer())) {
 			if (receiver.level() == level && ServerPlayNetworking.canSend(receiver, PingBroadcastPayload.TYPE)) {

@@ -33,7 +33,10 @@ public final class PingConfigScreen {
 				.category(appearance(config))
 				.category(sound(config))
 				.category(limits(config))
-				.save(config::save)
+				.save(() -> {
+					config.save();
+					ClientPings.sendColor();
+				})
 				.build()
 				.generateScreen(parent);
 	}
@@ -97,8 +100,6 @@ public final class PingConfigScreen {
 						.option(bool("server_colour", DEFAULTS.useServerColor, () -> config.useServerColor,
 								value -> config.useServerColor = value))
 						.option(colour(config))
-						.option(bool("sync_colours", DEFAULTS.syncAllColors, () -> config.syncAllColors,
-								value -> config.syncAllColors = value))
 						.build())
 				.build();
 	}

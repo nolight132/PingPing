@@ -69,8 +69,6 @@ public final class PingConfig {
 
 	public int customColor = 0xFFE066;
 
-	public boolean syncAllColors = true;
-
 	public static PingConfig get() {
 		if (instance == null) {
 			instance = load();

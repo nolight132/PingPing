@@ -1,6 +1,7 @@
 package dev.nolight.pingping.client;
 
 import dev.nolight.pingping.PingBroadcastPayload;
+import dev.nolight.pingping.PingColorPayload;
 import dev.nolight.pingping.PingConfig;
 import dev.nolight.pingping.PingPing;
 import dev.nolight.pingping.PingRequestPayload;
@@ -40,13 +41,7 @@ public final class ClientPings {
 	private ClientPings() {
 	}
 
-	public record ActivePing(int entityId, Vec3 pos, boolean block, boolean preview, int serverColor, int customColor,
-			long expiresAt) {
-		public int color() {
-			PingConfig config = PingConfig.get();
-			return config.syncAllColors || customColor == PingPing.AUTO_COLOR ? serverColor : customColor;
-		}
-
+	public record ActivePing(int entityId, Vec3 pos, boolean block, boolean preview, int color, long expiresAt) {
 		public Vec3 currentPos(ClientLevel level, float partialTick) {
 			if (entityId == PingTarget.NO_ENTITY) {
 				return pos;
@@ -59,13 +54,14 @@ public final class ClientPings {
 
 	public static void register() {
 		ClientPlayNetworking.registerGlobalReceiver(PingBroadcastPayload.TYPE,
-				(payload, context) -> accept(context.client(), payload.target(), payload.sender(),
-						payload.serverColor(), payload.customColor()));
+				(payload, context) -> accept(context.client(), payload.target(), payload.sender(), payload.color()));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			clientTick++;
 			ACTIVE.removeIf(ping -> ping.expiresAt() <= clientTick);
 		});
+
+		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> sendColor());
 
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
 			ACTIVE.clear();
@@ -73,8 +69,18 @@ public final class ClientPings {
 		});
 	}
 
-	private static void accept(Minecraft client, PingTarget target, java.util.UUID sender, int serverColor,
-			int customColor) {
+	/** Tells the server which colour to paint this player's markers and locator bar dot. */
+	public static void sendColor() {
+		if (!ClientPlayNetworking.canSend(PingColorPayload.TYPE)) {
+			return;
+		}
+
+		PingConfig config = PingConfig.get();
+		ClientPlayNetworking.send(new PingColorPayload(
+				config.useServerColor ? PingPing.AUTO_COLOR : PingPing.sanitiseColor(config.customColor)));
+	}
+
+	private static void accept(Minecraft client, PingTarget target, java.util.UUID sender, int color) {
 		ClientLevel level = client.level;
 		LocalPlayer player = client.player;
 
@@ -83,8 +89,8 @@ public final class ClientPings {
 		}
 
 		ACTIVE.removeIf(ping -> target.isEntity() && ping.entityId() == target.entityId());
-		ACTIVE.add(new ActivePing(target.entityId(), target.pos(), target.block(), target.preview(), serverColor,
-				customColor, clientTick + PingConfig.get().lifetimeTicks()));
+		ACTIVE.add(new ActivePing(target.entityId(), target.pos(), target.block(), target.preview(), color,
+				clientTick + PingConfig.get().lifetimeTicks()));
 
 		if (PingConfig.get().soundEnabled && shouldHear(level, player, sender)) {
 			playPing(client, level, player, target.pos());
@@ -132,11 +138,6 @@ public final class ClientPings {
 		return origin.position().distanceToSqr(player.position()) <= radius * radius;
 	}
 
-	private static int outgoingColor() {
-		PingConfig config = PingConfig.get();
-		return config.useServerColor ? PingPing.AUTO_COLOR : PingPing.sanitiseColor(config.customColor);
-	}
-
 	public static List<ActivePing> active() {
 		return ACTIVE;
 	}
@@ -180,7 +181,7 @@ public final class ClientPings {
 
 	private static void send(PingTarget target) {
 		if (target != null) {
-			ClientPlayNetworking.send(new PingRequestPayload(target, outgoingColor()));
+			ClientPlayNetworking.send(new PingRequestPayload(target));
 		}
 	}
 
