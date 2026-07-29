@@ -39,8 +39,12 @@ public final class ClientPings {
 	private ClientPings() {
 	}
 
-	/** A ping being displayed. {@code entityId} is {@link PingTarget#NO_ENTITY} for a plain world position. */
-	public record ActivePing(int entityId, Vec3 pos, boolean block, int color, long expiresAt) {
+	public record ActivePing(int entityId, Vec3 pos, boolean block, int serverColor, int customColor, long expiresAt) {
+		public int color() {
+			PingConfig config = PingConfig.get();
+			return config.syncAllColors || customColor == PingPing.AUTO_COLOR ? serverColor : customColor;
+		}
+
 		public Vec3 currentPos(ClientLevel level, float partialTick) {
 			if (entityId == PingTarget.NO_ENTITY) {
 				return pos;
@@ -53,7 +57,8 @@ public final class ClientPings {
 
 	public static void register() {
 		ClientPlayNetworking.registerGlobalReceiver(PingBroadcastPayload.TYPE,
-				(payload, context) -> accept(context.client(), payload.target(), payload.sender(), payload.color()));
+				(payload, context) -> accept(context.client(), payload.target(), payload.sender(),
+						payload.serverColor(), payload.customColor()));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			clientTick++;
@@ -66,7 +71,8 @@ public final class ClientPings {
 		});
 	}
 
-	private static void accept(Minecraft client, PingTarget target, java.util.UUID sender, int color) {
+	private static void accept(Minecraft client, PingTarget target, java.util.UUID sender, int serverColor,
+			int customColor) {
 		ClientLevel level = client.level;
 		LocalPlayer player = client.player;
 
@@ -75,7 +81,7 @@ public final class ClientPings {
 		}
 
 		ACTIVE.removeIf(ping -> target.isEntity() && ping.entityId() == target.entityId());
-		ACTIVE.add(new ActivePing(target.entityId(), target.pos(), target.block(), color,
+		ACTIVE.add(new ActivePing(target.entityId(), target.pos(), target.block(), serverColor, customColor,
 				clientTick + PingConfig.get().lifetimeTicks()));
 
 		if (PingConfig.get().soundEnabled && shouldHear(level, player, sender)) {
@@ -103,10 +109,9 @@ public final class ClientPings {
 		return origin.position().distanceToSqr(player.position()) <= radius * radius;
 	}
 
-	/** The colour to ask for, or the sentinel that lets the server hand one out by UUID. */
 	private static int outgoingColor() {
 		PingConfig config = PingConfig.get();
-		return config.autoMarkerColor ? PingPing.AUTO_COLOR : PingPing.sanitiseColor(config.markerColor);
+		return config.useServerColor ? PingPing.AUTO_COLOR : PingPing.sanitiseColor(config.customColor);
 	}
 
 	public static List<ActivePing> active() {

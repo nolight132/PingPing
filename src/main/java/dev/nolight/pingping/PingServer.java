@@ -19,7 +19,7 @@ public final class PingServer {
 
 	public static void register() {
 		ServerPlayNetworking.registerGlobalReceiver(PingRequestPayload.TYPE,
-				(payload, context) -> handle(context.player(), payload.target(), payload.color()));
+				(payload, context) -> handle(context.player(), payload.target(), payload.customColor()));
 
 		ServerPlayConnectionEvents.DISCONNECT
 				.register((handler, server) -> BUDGETS.remove(handler.getPlayer().getUUID()));
@@ -52,10 +52,11 @@ public final class PingServer {
 			return;
 		}
 
-		int color = requestedColor == PingPing.AUTO_COLOR
-				? PingPing.autoColorFor(player.getUUID())
+		int customColor = requestedColor == PingPing.AUTO_COLOR
+				? PingPing.AUTO_COLOR
 				: PingPing.sanitiseColor(requestedColor);
-		PingBroadcastPayload broadcast = new PingBroadcastPayload(target, player.getUUID(), color);
+		PingBroadcastPayload broadcast = new PingBroadcastPayload(target, player.getUUID(),
+				PingColors.locatorBar(player), customColor);
 
 		for (ServerPlayer receiver : PlayerLookup.all(level.getServer())) {
 			if (receiver.level() == level && ServerPlayNetworking.canSend(receiver, PingBroadcastPayload.TYPE)) {

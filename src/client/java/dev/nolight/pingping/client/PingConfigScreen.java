@@ -76,6 +76,15 @@ public final class PingConfigScreen {
 								value -> config.showEdgeArrows = value))
 						.build())
 				.group(OptionGroup.createBuilder()
+						.name(text("group.colour"))
+						.description(OptionDescription.of(text("group.colour.note")))
+						.option(bool("server_colour", DEFAULTS.useServerColor, () -> config.useServerColor,
+								value -> config.useServerColor = value))
+						.option(colour(config))
+						.option(bool("sync_colours", DEFAULTS.syncAllColors, () -> config.syncAllColors,
+								value -> config.syncAllColors = value))
+						.build())
+				.group(OptionGroup.createBuilder()
 						.name(text("group.sound"))
 						.option(bool("sound", DEFAULTS.soundEnabled, () -> config.soundEnabled,
 								value -> config.soundEnabled = value))
@@ -101,14 +110,13 @@ public final class PingConfigScreen {
 				.build();
 	}
 
-	/** Stored as packed RGB but edited as a colour, so the binding converts either way. */
 	private static Option<Color> colour(PingConfig config) {
 		return Option.<Color>createBuilder()
 				.name(text("option.colour"))
 				.description(OptionDescription.of(text("option.colour.desc")))
-				.binding(new Color(DEFAULTS.markerColor),
-						() -> new Color(config.markerColor & 0xFFFFFF),
-						value -> config.markerColor = value.getRGB() & 0xFFFFFF)
+				.binding(new Color(DEFAULTS.customColor),
+						() -> new Color(config.customColor & 0xFFFFFF),
+						value -> config.customColor = value.getRGB() & 0xFFFFFF)
 				.controller(option -> ColorControllerBuilder.create(option).allowAlpha(false))
 				.build();
 	}
