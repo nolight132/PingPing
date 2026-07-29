@@ -56,8 +56,8 @@ public final class PingHud {
 					continue;
 				}
 
-				Component distance = Component.translatable("pingping.marker.distance",
-						Math.round(world.distanceTo(player.getEyePosition())));
+				float away = (float) world.distanceTo(player.getEyePosition());
+				Component distance = Component.translatable("pingping.marker.distance", Math.round(away));
 
 				boolean onScreen = screen.z > 0.0f && screen.w != 0.0f
 						&& screen.x >= EDGE_INSET && screen.x <= width - EDGE_INSET
@@ -66,7 +66,8 @@ public final class PingHud {
 				int color = 0xFF000000 | ping.color();
 
 				if (onScreen) {
-					drawMarker(graphics, font, screen.x, screen.y, distance, ping, level, partialTick, color);
+					drawMarker(graphics, font, screen.x, screen.y, distance, ping, level, partialTick, color,
+							(float) PingConfig.get().markerScale * distanceFactor(away));
 				} else if (PingConfig.get().showEdgeArrows) {
 					drawEdgeArrow(graphics, font, screen, width, height, distance, color);
 				}
@@ -74,10 +75,19 @@ public final class PingHud {
 		});
 	}
 
-	/** Diamond sits on the target, distance rides above it, preview above that. */
+	private static float distanceFactor(float away) {
+		PingConfig config = PingConfig.get();
+
+		if (!config.scaleWithDistance) {
+			return 1.0f;
+		}
+
+		double factor = config.scaleReferenceDistance / Math.max(away, 0.1f);
+		return (float) Math.min(config.maxMarkerScale, Math.max(config.minMarkerScale, factor));
+	}
+
 	private static void drawMarker(GuiGraphicsExtractor graphics, Font font, float x, float y, Component distance,
-			ClientPings.ActivePing ping, ClientLevel level, float partialTick, int color) {
-		float scale = (float) PingConfig.get().markerScale;
+			ClientPings.ActivePing ping, ClientLevel level, float partialTick, int color, float scale) {
 		Matrix3x2fStack pose = graphics.pose();
 
 		pose.pushMatrix();
@@ -87,18 +97,25 @@ public final class PingHud {
 		backdrop(graphics, font, distance, 0, -font.lineHeight - font.lineHeight / 2 - 2, color);
 		pose.popMatrix();
 
-		if (PingConfig.get().showIcons) {
-			int size = Math.max(2, Math.round(PingConfig.get().previewSize * scale));
-			float centreY = y - (font.lineHeight * 2.0f + 3.0f) * scale - size * 0.5f;
-			drawPreview(graphics, ping, level, partialTick, x, centreY, size);
+		PingConfig config = PingConfig.get();
+
+		if (config.showIcons) {
+			float drawPx = Math.max(2.0f, config.previewSize * scale);
+			float centreY = y - (font.lineHeight * 2.0f + 3.0f) * scale - drawPx * 0.5f;
+			drawPreview(graphics, ping, level, partialTick, x, centreY, previewBox(config), drawPx);
 		}
 	}
 
+	private static int previewBox(PingConfig config) {
+		double widest = config.scaleWithDistance ? Math.max(config.maxMarkerScale, 1.0) : 1.0;
+		return Math.max(2, (int) Math.ceil(config.previewSize * config.markerScale * widest));
+	}
+
 	private static void drawPreview(GuiGraphicsExtractor graphics, ClientPings.ActivePing ping, ClientLevel level,
-			float partialTick, float centreX, float centreY, int size) {
+			float partialTick, float centreX, float centreY, int boxPx, float drawPx) {
 		if (ping.entityId() == PingTarget.NO_ENTITY) {
 			if (ping.block()) {
-				blitItem(graphics, PingIcons.itemForBlock(level, ping.pos()), centreX, centreY, size);
+				blitItem(graphics, PingIcons.itemForBlock(level, ping.pos()), centreX, centreY, drawPx);
 			}
 
 			return;
@@ -113,15 +130,15 @@ public final class PingHud {
 		ItemStack stack = PingIcons.itemFor(entity);
 
 		if (!stack.isEmpty()) {
-			blitItem(graphics, stack, centreX, centreY, size);
+			blitItem(graphics, stack, centreX, centreY, drawPx);
 			return;
 		}
 
-		PingIcons.entity(graphics, entity, partialTick, centreX, centreY, size);
+		PingIcons.entity(graphics, entity, partialTick, centreX, centreY, boxPx, drawPx);
 	}
 
 	private static void blitItem(GuiGraphicsExtractor graphics, ItemStack stack, float centreX, float centreY,
-			int size) {
+			float size) {
 		if (stack.isEmpty()) {
 			return;
 		}

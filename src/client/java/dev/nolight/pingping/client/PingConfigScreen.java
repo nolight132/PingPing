@@ -78,6 +78,19 @@ public final class PingConfigScreen {
 								value -> config.showEdgeArrows = value))
 						.build())
 				.group(OptionGroup.createBuilder()
+						.name(text("group.distance"))
+						.description(OptionDescription.of(text("group.distance.note")))
+						.option(bool("scale_with_distance", DEFAULTS.scaleWithDistance,
+								() -> config.scaleWithDistance, value -> config.scaleWithDistance = value))
+						.option(doubleSlider("scale_reference", DEFAULTS.scaleReferenceDistance,
+								() -> config.scaleReferenceDistance,
+								value -> config.scaleReferenceDistance = value, 8.0, 128.0, 4.0))
+						.option(doubleSlider("min_scale", DEFAULTS.minMarkerScale, () -> config.minMarkerScale,
+								value -> config.minMarkerScale = value, 0.25, 2.0, 0.05))
+						.option(doubleSlider("max_scale", DEFAULTS.maxMarkerScale, () -> config.maxMarkerScale,
+								value -> config.maxMarkerScale = value, 1.0, 6.0, 0.25))
+						.build())
+				.group(OptionGroup.createBuilder()
 						.name(text("group.colour"))
 						.description(OptionDescription.of(text("group.colour.note")))
 						.option(bool("server_colour", DEFAULTS.useServerColor, () -> config.useServerColor,

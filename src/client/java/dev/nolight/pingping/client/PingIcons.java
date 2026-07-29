@@ -36,7 +36,7 @@ public final class PingIcons {
 	}
 
 	public static void entity(GuiGraphicsExtractor graphics, Entity entity, float partialTick, float centreX,
-			float centreY, int boxPx) {
+			float centreY, int boxPx, float drawPx) {
 		EntityRenderState state;
 
 		try {
@@ -81,7 +81,7 @@ public final class PingIcons {
 		float top = centreY - boxPx / 2.0f;
 		int x0 = Math.round(left);
 		int y0 = Math.round(top);
-		float entityScale = boxPx / span;
+		float entityScale = drawPx / span;
 
 		graphics.entity(state, entityScale,
 				new Vector3f((left - x0) / entityScale, anchor + (top - y0) / entityScale, 0.0f),
