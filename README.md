@@ -15,9 +15,14 @@ the mod installed sees the marker for a few seconds.
 | Input                | Action                                                                                                                                                               |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Middle click         | Mark the entity you are looking at. With nothing alive in sight, vanilla pick block gets the click, and failing that a bare marker lands on the exact spot aimed at. |
-| Sneak + middle click | Mark the block you are looking at, previewed with its item icon.                                                                                                     |
+| Sneak + middle click | Mark the block you are looking at. Sneaking always wins over pick block.                                                                                             |
 
-Each player's markers carry their own colour, assigned from their UUID or picked in the settings.
+Both keys are rebindable under Controls, along with a key that always marks a block and one that opens the
+settings. Which of the two gestures attaches a preview is a setting of its own, as is the ping sound.
+
+Each player's markers take a colour from the mod's own palette, handed out so that nobody online shares one. The
+same colour replaces that player's dot on the locator bar, so a marker and its dot always match, and any player
+can override it in the settings.
 
 ## Building
 

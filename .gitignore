@@ -24,5 +24,6 @@ remappedSrc/
 # eclipse run configs from genEclipseRuns
 *.launch
 
-# modrinth description, kept out of the repo
+# modrinth release copy, kept out of the repo
 MODRINTH.md
+CHANGELOG.md
