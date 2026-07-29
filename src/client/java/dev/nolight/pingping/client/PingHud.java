@@ -117,9 +117,7 @@ public final class PingHud {
 			return;
 		}
 
-		int x0 = Math.round(centreX - size / 2.0f);
-		int y0 = Math.round(centreY - size / 2.0f);
-		PingIcons.entity(graphics, entity, partialTick, x0, y0, x0 + size, y0 + size);
+		PingIcons.entity(graphics, entity, partialTick, centreX, centreY, size);
 	}
 
 	private static void blitItem(GuiGraphicsExtractor graphics, ItemStack stack, float centreX, float centreY,

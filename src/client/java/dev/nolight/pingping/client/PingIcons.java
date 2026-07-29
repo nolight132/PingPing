@@ -35,8 +35,8 @@ public final class PingIcons {
 		return state.isAir() ? ItemStack.EMPTY : new ItemStack(state.getBlock().asItem());
 	}
 
-	public static void entity(GuiGraphicsExtractor graphics, Entity entity, float partialTick, int x0, int y0, int x1,
-			int y1) {
+	public static void entity(GuiGraphicsExtractor graphics, Entity entity, float partialTick, float centreX,
+			float centreY, int boxPx) {
 		EntityRenderState state;
 
 		try {
@@ -77,7 +77,14 @@ public final class PingIcons {
 			anchor = Mth.clamp(Math.min(state.eyeHeight / modelScale, height - span * 0.4f), span * 0.5f, height);
 		}
 
-		graphics.entity(state, (x1 - x0) / span, new Vector3f(0.0f, anchor, 0.0f),
-				new Quaternionf().rotateZ((float) Math.PI), null, x0, y0, x1, y1);
+		float left = centreX - boxPx / 2.0f;
+		float top = centreY - boxPx / 2.0f;
+		int x0 = Math.round(left);
+		int y0 = Math.round(top);
+		float entityScale = boxPx / span;
+
+		graphics.entity(state, entityScale,
+				new Vector3f((left - x0) / entityScale, anchor + (top - y0) / entityScale, 0.0f),
+				new Quaternionf().rotateZ((float) Math.PI), null, x0, y0, x0 + boxPx, y0 + boxPx);
 	}
 }
