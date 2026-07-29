@@ -42,6 +42,12 @@ public final class PingConfig {
 	public boolean directionalSound = true;
 
 	public double soundSphereRadius = 8.0;
+
+	public String soundId = "minecraft:block.amethyst_block.hit";
+
+	public double soundVolume = 1.6;
+
+	public double soundPitch = 1.0;
 	public boolean showIcons = true;
 	public boolean showEdgeArrows = true;
 	public double markerScale = 0.75;

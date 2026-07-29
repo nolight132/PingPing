@@ -8,6 +8,7 @@ import dev.isxander.yacl3.api.YetAnotherConfigLib;
 import dev.isxander.yacl3.api.controller.BooleanControllerBuilder;
 import dev.isxander.yacl3.api.controller.ColorControllerBuilder;
 import dev.isxander.yacl3.api.controller.DoubleSliderControllerBuilder;
+import dev.isxander.yacl3.api.controller.DropdownStringControllerBuilder;
 import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
 import dev.nolight.pingping.PingConfig;
 import net.minecraft.client.gui.screens.Screen;
@@ -30,6 +31,7 @@ public final class PingConfigScreen {
 				.title(text("title"))
 				.category(targeting(config))
 				.category(appearance(config))
+				.category(sound(config))
 				.category(limits(config))
 				.save(config::save)
 				.build()
@@ -96,10 +98,25 @@ public final class PingConfigScreen {
 						.option(bool("sync_colours", DEFAULTS.syncAllColors, () -> config.syncAllColors,
 								value -> config.syncAllColors = value))
 						.build())
+				.build();
+	}
+
+	private static ConfigCategory sound(PingConfig config) {
+		return ConfigCategory.createBuilder()
+				.name(text("category.sound"))
 				.group(OptionGroup.createBuilder()
 						.name(text("group.sound"))
 						.option(bool("sound", DEFAULTS.soundEnabled, () -> config.soundEnabled,
 								value -> config.soundEnabled = value))
+						.option(soundPicker(config))
+						.option(doubleSlider("sound_volume", DEFAULTS.soundVolume, () -> config.soundVolume,
+								value -> config.soundVolume = value, 0.1, 4.0, 0.1))
+						.option(doubleSlider("sound_pitch", DEFAULTS.soundPitch, () -> config.soundPitch,
+								value -> config.soundPitch = value, 0.5, 2.0, 0.05))
+						.build())
+				.group(OptionGroup.createBuilder()
+						.name(text("group.hearing"))
+						.description(OptionDescription.of(text("group.hearing.note")))
 						.option(doubleSlider("sound_radius", DEFAULTS.soundRadius, () -> config.soundRadius,
 								value -> config.soundRadius = value, 0.0, 256.0, 8.0))
 						.option(bool("directional_sound", DEFAULTS.directionalSound, () -> config.directionalSound,
@@ -108,6 +125,18 @@ public final class PingConfigScreen {
 								() -> config.soundSphereRadius, value -> config.soundSphereRadius = value, 1.0, 15.0,
 								0.5))
 						.build())
+				.build();
+	}
+
+	private static Option<String> soundPicker(PingConfig config) {
+		return Option.<String>createBuilder()
+				.name(text("option.sound_id"))
+				.description(OptionDescription.of(text("option.sound_id.desc")))
+				.binding(DEFAULTS.soundId, () -> config.soundId, value -> config.soundId = value)
+				.controller(option -> DropdownStringControllerBuilder.create(option)
+						.values(PingSounds.SUGGESTED)
+						.allowAnyValue(true)
+						.allowEmptyValue(false))
 				.build();
 	}
 
