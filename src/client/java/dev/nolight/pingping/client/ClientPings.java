@@ -118,11 +118,7 @@ public final class ClientPings {
 		return ACTIVE;
 	}
 
-	/**
-	 * Called from the pick-block hook. Returns {@code true} when the click was consumed as a ping and vanilla
-	 * pick block should be skipped.
-	 */
-	public static boolean tryPing(boolean sneaking) {
+	public static boolean tryPing(boolean blockMode) {
 		Minecraft client = Minecraft.getInstance();
 		LocalPlayer player = client.player;
 		ClientLevel level = client.level;
@@ -133,8 +129,7 @@ public final class ClientPings {
 
 		PingConfig config = PingConfig.get();
 
-		// Sneak is the block gesture: it marks whatever block is being aimed at and nothing else.
-		if (sneaking) {
+		if (blockMode) {
 			PingTarget block = worldTarget(player, level, true);
 
 			if (block != null) {

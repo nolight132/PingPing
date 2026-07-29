@@ -1,6 +1,11 @@
 {
     "pingping.marker.distance": "%sm",
 
+    "key.category.pingping.main": "PingPing",
+    "key.pingping.ping": "Ping",
+    "key.pingping.ping_block": "Ping a block",
+    "key.pingping.settings": "Open PingPing settings",
+
     "pingping.options.title": "PingPing",
 
     "pingping.options.category.targeting": "Targeting",
