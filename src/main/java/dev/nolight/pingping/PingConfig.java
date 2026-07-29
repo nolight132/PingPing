@@ -45,6 +45,8 @@ public final class PingConfig {
 	/** Edge length in pixels of the preview above a marker. */
 	public int previewSize = 12;
 
+	public boolean previewFullBody = false;
+
 	public boolean useServerColor = true;
 
 	public int customColor = 0xFFE066;

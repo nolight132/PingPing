@@ -8,7 +8,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
@@ -89,24 +88,17 @@ public final class PingHud {
 		pose.popMatrix();
 
 		if (PingConfig.get().showIcons) {
-			// Positioned on the matrix in floats: rounding the pixel here made previews twitch as the player moved.
-			pose.pushMatrix();
-			pose.translate(x,
-					y - (font.lineHeight * 2.0f + 3.0f) * scale - PingConfig.get().previewSize * scale * 0.5f);
-			pose.scale(scale, scale);
-			drawPreview(graphics, ping, level, partialTick);
-			pose.popMatrix();
+			int size = Math.max(2, Math.round(PingConfig.get().previewSize * scale));
+			float centreY = y - (font.lineHeight * 2.0f + 3.0f) * scale - size * 0.5f;
+			drawPreview(graphics, ping, level, partialTick, x, centreY, size);
 		}
 	}
 
-	/** Items and blocks show their icon; anything else alive shows a live portrait of itself. */
-	/** Blocks and dropped items show their icon; anything else shows its face cropped from its own texture. */
 	private static void drawPreview(GuiGraphicsExtractor graphics, ClientPings.ActivePing ping, ClientLevel level,
-			float partialTick) {
+			float partialTick, float centreX, float centreY, int size) {
 		if (ping.entityId() == PingTarget.NO_ENTITY) {
-			// A bare point has nothing to preview; only a deliberately marked block does.
 			if (ping.block()) {
-				blitItem(graphics, PingIcons.itemForBlock(level, ping.pos()));
+				blitItem(graphics, PingIcons.itemForBlock(level, ping.pos()), centreX, centreY, size);
 			}
 
 			return;
@@ -121,25 +113,25 @@ public final class PingHud {
 		ItemStack stack = PingIcons.itemFor(entity);
 
 		if (!stack.isEmpty()) {
-			blitItem(graphics, stack);
+			blitItem(graphics, stack, centreX, centreY, size);
 			return;
 		}
 
-		EntityRenderState state = Minecraft.getInstance().getEntityRenderDispatcher()
-				.extractEntity(entity, partialTick);
-		int size = PingConfig.get().previewSize;
-		PingIcons.face(graphics, entity, state, -size / 2, -size / 2, size);
+		int x0 = Math.round(centreX - size / 2.0f);
+		int y0 = Math.round(centreY - size / 2.0f);
+		PingIcons.entity(graphics, entity, partialTick, x0, y0, x0 + size, y0 + size);
 	}
 
-	/** Item icons are authored at 16px, so shrink them to the preview box. */
-	private static void blitItem(GuiGraphicsExtractor graphics, ItemStack stack) {
+	private static void blitItem(GuiGraphicsExtractor graphics, ItemStack stack, float centreX, float centreY,
+			int size) {
 		if (stack.isEmpty()) {
 			return;
 		}
 
-		float shrink = PingConfig.get().previewSize / 16.0f;
+		float shrink = size / 16.0f;
 		Matrix3x2fStack pose = graphics.pose();
 		pose.pushMatrix();
+		pose.translate(centreX, centreY);
 		pose.scale(shrink, shrink);
 		graphics.item(stack, -8, -8);
 		pose.popMatrix();

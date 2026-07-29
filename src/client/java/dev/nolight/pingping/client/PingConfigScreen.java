@@ -72,6 +72,8 @@ public final class PingConfigScreen {
 								value -> config.previewSize = value, 6, 32, 1))
 						.option(bool("show_icons", DEFAULTS.showIcons, () -> config.showIcons,
 								value -> config.showIcons = value))
+						.option(bool("preview_full_body", DEFAULTS.previewFullBody, () -> config.previewFullBody,
+								value -> config.previewFullBody = value))
 						.option(bool("edge_arrows", DEFAULTS.showEdgeArrows, () -> config.showEdgeArrows,
 								value -> config.showEdgeArrows = value))
 						.build())
