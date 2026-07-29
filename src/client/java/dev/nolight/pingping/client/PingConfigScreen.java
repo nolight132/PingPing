@@ -105,6 +105,11 @@ public final class PingConfigScreen {
 								value -> config.soundEnabled = value))
 						.option(doubleSlider("sound_radius", DEFAULTS.soundRadius, () -> config.soundRadius,
 								value -> config.soundRadius = value, 0.0, 256.0, 8.0))
+						.option(bool("directional_sound", DEFAULTS.directionalSound, () -> config.directionalSound,
+								value -> config.directionalSound = value))
+						.option(doubleSlider("sound_sphere", DEFAULTS.soundSphereRadius,
+								() -> config.soundSphereRadius, value -> config.soundSphereRadius = value, 1.0, 15.0,
+								0.5))
 						.build())
 				.build();
 	}

@@ -16,6 +16,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
@@ -85,9 +86,33 @@ public final class ClientPings {
 				clientTick + PingConfig.get().lifetimeTicks()));
 
 		if (PingConfig.get().soundEnabled && shouldHear(level, player, sender)) {
-			// Non-positional: played at the listener's own ears, so nobody hears anyone else's ping from afar.
-			client.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_PLING.value(), 1.6f, 0.5f));
+			playPing(client, level, player, target.pos());
 		}
+	}
+
+	private static void playPing(Minecraft client, ClientLevel level, LocalPlayer player, Vec3 spot) {
+		PingConfig config = PingConfig.get();
+
+		if (!config.directionalSound) {
+			client.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_PLING.value(), 1.6f, 0.5f));
+			return;
+		}
+
+		Vec3 ear = player.getEyePosition();
+		Vec3 offset = spot.subtract(ear);
+		double away = offset.length();
+
+		if (away < 1.0e-4) {
+			client.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_PLING.value(), 1.6f, 0.5f));
+			return;
+		}
+
+		double reach = Math.max(config.maxDistance, 1.0);
+		double mapped = config.soundSphereRadius * Math.sqrt(Math.min(away / reach, 1.0));
+		Vec3 at = ear.add(offset.scale(mapped / away));
+
+		level.playLocalSound(at.x, at.y, at.z, SoundEvents.NOTE_BLOCK_PLING.value(), SoundSource.MASTER, 1.6f, 0.5f,
+				false);
 	}
 
 	/**

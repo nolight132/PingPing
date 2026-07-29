@@ -64,6 +64,10 @@
     "pingping.options.option.sound.desc": "Play a note when a marker appears. Your own is always audible; someone else's only carries within the radius below.",
     "pingping.options.option.sound_radius": "Hearing radius",
     "pingping.options.option.sound_radius.desc": "How close another player must be for you to hear their ping, in blocks.",
+    "pingping.options.option.directional_sound": "Directional",
+    "pingping.options.option.directional_sound.desc": "Play the ping from the direction of the marker rather than flat at your ears. The real distance is squeezed into the sphere below, so a far ping is still audible but sounds further off.",
+    "pingping.options.option.sound_sphere": "Sphere radius",
+    "pingping.options.option.sound_sphere.desc": "How many blocks away the very furthest ping is made to sound. Smaller keeps every ping loud; larger widens the sense of distance.",
 
     "pingping.options.option.lifetime": "Marker lifetime",
     "pingping.options.option.lifetime.desc": "How long a marker stays on screen, in seconds.",

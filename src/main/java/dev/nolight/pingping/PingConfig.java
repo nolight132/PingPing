@@ -38,6 +38,10 @@ public final class PingConfig {
 	// --- presentation, client side ---
 	public boolean soundEnabled = true;
 	public double soundRadius = 48.0;
+
+	public boolean directionalSound = true;
+
+	public double soundSphereRadius = 8.0;
 	public boolean showIcons = true;
 	public boolean showEdgeArrows = true;
 	public double markerScale = 0.75;
