@@ -46,6 +46,8 @@ public final class PingConfigScreen {
 						.option(bool("block_needs_sneak", DEFAULTS.blockPingNeedsSneak,
 								() -> config.blockPingNeedsSneak,
 								value -> config.blockPingNeedsSneak = value))
+						.option(bool("preview_needs_sneak", DEFAULTS.previewNeedsSneak,
+								() -> config.previewNeedsSneak, value -> config.previewNeedsSneak = value))
 						.option(bool("snap_block", DEFAULTS.snapBlockToCentre, () -> config.snapBlockToCentre,
 								value -> config.snapBlockToCentre = value))
 						.option(bool("free_point", DEFAULTS.freePointPing, () -> config.freePointPing,

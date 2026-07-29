@@ -29,6 +29,8 @@ public final class PingConfig {
 	/** When true a block can only be marked while sneaking; a plain click then only ever finds entities. */
 	public boolean blockPingNeedsSneak = true;
 
+	public boolean previewNeedsSneak = true;
+
 	/** Sneak-marked blocks sit at the block's centre instead of the exact spot the ray struck. */
 	public boolean snapBlockToCentre = true;
 

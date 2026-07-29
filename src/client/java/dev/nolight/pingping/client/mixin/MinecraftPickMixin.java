@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MinecraftPickMixin {
 	@Inject(method = "pickBlockOrEntity", at = @At("HEAD"), cancellable = true)
 	private void pingping$pingInsteadOfPick(CallbackInfo ci) {
-		if (PingKeys.replacesPickBlock() && ClientPings.tryPing(PingKeys.blockRequested())) {
+		if (PingKeys.replacesPickBlock() && ClientPings.tryPing(PingKeys.forceBlock(), PingKeys.detailed())) {
 			ci.cancel();
 		}
 	}

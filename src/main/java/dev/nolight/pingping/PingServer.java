@@ -37,7 +37,7 @@ public final class PingServer {
 			}
 
 			spot = entity.position();
-			target = PingTarget.ofEntity(target.entityId(), spot);
+			target = PingTarget.ofEntity(target.entityId(), spot, target.preview());
 		}
 
 		double reach = PingConfig.get().maxDistance + 8.0;

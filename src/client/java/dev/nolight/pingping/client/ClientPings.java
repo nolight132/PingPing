@@ -40,7 +40,8 @@ public final class ClientPings {
 	private ClientPings() {
 	}
 
-	public record ActivePing(int entityId, Vec3 pos, boolean block, int serverColor, int customColor, long expiresAt) {
+	public record ActivePing(int entityId, Vec3 pos, boolean block, boolean preview, int serverColor, int customColor,
+			long expiresAt) {
 		public int color() {
 			PingConfig config = PingConfig.get();
 			return config.syncAllColors || customColor == PingPing.AUTO_COLOR ? serverColor : customColor;
@@ -82,8 +83,8 @@ public final class ClientPings {
 		}
 
 		ACTIVE.removeIf(ping -> target.isEntity() && ping.entityId() == target.entityId());
-		ACTIVE.add(new ActivePing(target.entityId(), target.pos(), target.block(), serverColor, customColor,
-				clientTick + PingConfig.get().lifetimeTicks()));
+		ACTIVE.add(new ActivePing(target.entityId(), target.pos(), target.block(), target.preview(), serverColor,
+				customColor, clientTick + PingConfig.get().lifetimeTicks()));
 
 		if (PingConfig.get().soundEnabled && shouldHear(level, player, sender)) {
 			playPing(client, level, player, target.pos());
@@ -140,7 +141,7 @@ public final class ClientPings {
 		return ACTIVE;
 	}
 
-	public static boolean tryPing(boolean blockMode) {
+	public static boolean tryPing(boolean forceBlock, boolean detailed) {
 		Minecraft client = Minecraft.getInstance();
 		LocalPlayer player = client.player;
 		ClientLevel level = client.level;
@@ -151,21 +152,15 @@ public final class ClientPings {
 
 		PingConfig config = PingConfig.get();
 
-		if (blockMode) {
-			PingTarget block = worldTarget(player, level, true);
-
-			if (block != null) {
-				ClientPlayNetworking.send(new PingRequestPayload(block, outgoingColor()));
-			}
-
+		if (forceBlock) {
+			send(worldTarget(player, level, true, detailed));
 			return true;
 		}
 
 		Entity entity = findEntity(player, level);
 
 		if (entity != null) {
-			ClientPlayNetworking.send(
-					new PingRequestPayload(PingTarget.ofEntity(entity.getId(), entity.position()), outgoingColor()));
+			send(PingTarget.ofEntity(entity.getId(), entity.position(), detailed));
 			return true;
 		}
 
@@ -174,15 +169,19 @@ public final class ClientPings {
 			return false;
 		}
 
-		PingTarget fallback = config.blockPingNeedsSneak
-				? (config.freePointPing ? worldTarget(player, level, false) : null)
-				: worldTarget(player, level, true);
-
-		if (fallback != null) {
-			ClientPlayNetworking.send(new PingRequestPayload(fallback, outgoingColor()));
+		if (detailed || !config.blockPingNeedsSneak) {
+			send(worldTarget(player, level, true, detailed));
+		} else if (config.freePointPing) {
+			send(worldTarget(player, level, false, false));
 		}
 
 		return true;
+	}
+
+	private static void send(PingTarget target) {
+		if (target != null) {
+			ClientPlayNetworking.send(new PingRequestPayload(target, outgoingColor()));
+		}
 	}
 
 	/**
@@ -209,7 +208,7 @@ public final class ClientPings {
 	 * Where a non-entity marker lands. As a block it snaps to the whole block and gains a preview; as a plain point
 	 * it stays exactly where the ray struck, so the marker sits on the pixel that was aimed at.
 	 */
-	private static PingTarget worldTarget(LocalPlayer player, ClientLevel level, boolean asBlock) {
+	private static PingTarget worldTarget(LocalPlayer player, ClientLevel level, boolean asBlock, boolean preview) {
 		double range = PingConfig.get().maxDistance;
 		Vec3 eye = player.getEyePosition();
 		Vec3 view = player.getViewVector(1.0f);
@@ -225,7 +224,7 @@ public final class ClientPings {
 
 		return PingTarget.ofBlock(PingConfig.get().snapBlockToCentre
 				? Vec3.atCenterOf(blockHit.getBlockPos())
-				: blockHit.getLocation());
+				: blockHit.getLocation(), preview);
 	}
 
 	private static BlockHitResult clip(LocalPlayer player, ClientLevel level, Vec3 eye, Vec3 view, double range) {
@@ -268,10 +267,6 @@ public final class ClientPings {
 		}
 
 		return best;
-	}
-
-	private static PingTarget entity(Entity entity) {
-		return PingTarget.ofEntity(entity.getId(), entity.position());
 	}
 
 	/** Vanilla pick block is only meaningful on blocks, or on entities while in creative (spawn eggs). */

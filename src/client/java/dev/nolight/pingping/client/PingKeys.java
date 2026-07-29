@@ -37,13 +37,17 @@ public final class PingKeys {
 		return ping != null && !ping.isUnbound() && ping.same(client.options.keyPickItem);
 	}
 
-	public static boolean blockRequested() {
-		if (pingBlock != null && pingBlock.isDown()) {
+	public static boolean forceBlock() {
+		return pingBlock != null && pingBlock.isDown();
+	}
+
+	public static boolean detailed() {
+		if (!PingConfig.get().previewNeedsSneak) {
 			return true;
 		}
 
 		Minecraft client = Minecraft.getInstance();
-		return PingConfig.get().blockPingNeedsSneak && client.player != null && client.player.isShiftKeyDown();
+		return forceBlock() || client.player != null && client.player.isShiftKeyDown();
 	}
 
 	private static void tick(Minecraft client) {
@@ -63,7 +67,7 @@ public final class PingKeys {
 			drain(pingBlock);
 		} else {
 			while (pingBlock.consumeClick()) {
-				ClientPings.tryPing(true);
+				ClientPings.tryPing(true, true);
 			}
 		}
 
@@ -71,7 +75,7 @@ public final class PingKeys {
 			drain(ping);
 		} else {
 			while (ping.consumeClick()) {
-				ClientPings.tryPing(blockRequested());
+				ClientPings.tryPing(forceBlock(), detailed());
 			}
 		}
 	}

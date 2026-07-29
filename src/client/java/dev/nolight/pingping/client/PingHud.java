@@ -100,7 +100,7 @@ public final class PingHud {
 
 		PingConfig config = PingConfig.get();
 
-		if (config.showIcons) {
+		if (config.showIcons && ping.preview()) {
 			float drawPx = Math.max(2.0f, config.previewSize * scale);
 			float centreY = y - (font.lineHeight * 2.0f + 3.0f) * scale - drawPx * 0.5f;
 			drawPreview(graphics, ping, level, partialTick, x, centreY, previewBox(config), drawPx);
