@@ -9,8 +9,10 @@ import dev.isxander.yacl3.api.controller.BooleanControllerBuilder;
 import dev.isxander.yacl3.api.controller.ColorControllerBuilder;
 import dev.isxander.yacl3.api.controller.DoubleSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.DropdownStringControllerBuilder;
+import dev.isxander.yacl3.api.controller.EnumControllerBuilder;
 import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
 import dev.nolight.pingping.PingConfig;
+import dev.nolight.pingping.PreviewTarget;
 import net.minecraft.client.gui.screens.Screen;
 import java.awt.Color;
 import java.util.function.Consumer;
@@ -49,8 +51,7 @@ public final class PingConfigScreen {
 						.option(bool("block_needs_sneak", DEFAULTS.blockPingNeedsSneak,
 								() -> config.blockPingNeedsSneak,
 								value -> config.blockPingNeedsSneak = value))
-						.option(bool("preview_needs_sneak", DEFAULTS.previewNeedsSneak,
-								() -> config.previewNeedsSneak, value -> config.previewNeedsSneak = value))
+						.option(previewTarget(config))
 						.option(bool("snap_block", DEFAULTS.snapBlockToCentre, () -> config.snapBlockToCentre,
 								value -> config.snapBlockToCentre = value))
 						.option(bool("free_point", DEFAULTS.freePointPing, () -> config.freePointPing,
@@ -156,6 +157,17 @@ public final class PingConfigScreen {
 						.option(doubleSlider("refill", DEFAULTS.refillSeconds, () -> config.refillSeconds,
 								value -> config.refillSeconds = value, 1.0, 60.0, 1.0))
 						.build())
+				.build();
+	}
+
+	private static Option<PreviewTarget> previewTarget(PingConfig config) {
+		return Option.<PreviewTarget>createBuilder()
+				.name(text("option.preview_target"))
+				.description(OptionDescription.of(text("option.preview_target.desc")))
+				.binding(DEFAULTS.previewTarget, () -> config.previewTarget, value -> config.previewTarget = value)
+				.controller(option -> EnumControllerBuilder.create(option)
+						.enumClass(PreviewTarget.class)
+						.valueFormatter(value -> text("preview_target." + value.key())))
 				.build();
 	}
 

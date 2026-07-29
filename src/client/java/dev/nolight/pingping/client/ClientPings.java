@@ -142,7 +142,7 @@ public final class ClientPings {
 		return ACTIVE;
 	}
 
-	public static boolean tryPing(boolean forceBlock, boolean detailed) {
+	public static boolean tryPing(boolean forceBlock, boolean sneaking) {
 		Minecraft client = Minecraft.getInstance();
 		LocalPlayer player = client.player;
 		ClientLevel level = client.level;
@@ -152,26 +152,27 @@ public final class ClientPings {
 		}
 
 		PingConfig config = PingConfig.get();
+		boolean preview = config.previewTarget.wants(sneaking);
 
 		if (forceBlock) {
-			send(worldTarget(player, level, true, detailed));
+			send(worldTarget(player, level, true, preview));
 			return true;
 		}
 
 		Entity entity = findEntity(player, level);
 
 		if (entity != null) {
-			send(PingTarget.ofEntity(entity.getId(), entity.position(), detailed));
+			send(PingTarget.ofEntity(entity.getId(), entity.position(), preview));
 			return true;
 		}
 
-		// Nothing alive under the crosshair, so pick block gets its turn before we fall back to a bare marker.
-		if (config.pickBlockWins && vanillaPickWouldWork(client, player)) {
+		// Sneaking is a deliberate ping, so it always beats pick block; otherwise pick block gets its turn first.
+		if (config.pickBlockWins && !sneaking && vanillaPickWouldWork(client, player)) {
 			return false;
 		}
 
-		if (detailed || !config.blockPingNeedsSneak) {
-			send(worldTarget(player, level, true, detailed));
+		if (sneaking || !config.blockPingNeedsSneak) {
+			send(worldTarget(player, level, true, preview));
 		} else if (config.freePointPing) {
 			send(worldTarget(player, level, false, false));
 		}

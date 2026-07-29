@@ -29,7 +29,7 @@ public final class PingConfig {
 	/** When true a block can only be marked while sneaking; a plain click then only ever finds entities. */
 	public boolean blockPingNeedsSneak = true;
 
-	public boolean previewNeedsSneak = true;
+	public PreviewTarget previewTarget = PreviewTarget.WHEN_NOT_SNEAKING;
 
 	/** Sneak-marked blocks sit at the block's centre instead of the exact spot the ray struck. */
 	public boolean snapBlockToCentre = true;
@@ -65,7 +65,7 @@ public final class PingConfig {
 
 	public boolean previewFullBody = false;
 
-	public boolean useServerColor = true;
+	public boolean useServerColor = false;
 
 	public int customColor = 0xFFE066;
 
@@ -98,6 +98,11 @@ public final class PingConfig {
 				PingConfig loaded = GSON.fromJson(Files.readString(path), PingConfig.class);
 
 				if (loaded != null) {
+					// Gson turns an unrecognised enum name into null rather than failing.
+					if (loaded.previewTarget == null) {
+						loaded.previewTarget = new PingConfig().previewTarget;
+					}
+
 					return loaded;
 				}
 			} catch (IOException | RuntimeException e) {

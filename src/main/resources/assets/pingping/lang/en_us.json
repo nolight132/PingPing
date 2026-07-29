@@ -28,8 +28,11 @@
 
     "pingping.options.option.block_needs_sneak": "Blocks need sneak",
     "pingping.options.option.block_needs_sneak.desc": "Only mark blocks while sneaking. A plain middle click then only ever finds entities.",
-    "pingping.options.option.preview_needs_sneak": "Previews need sneak",
-    "pingping.options.option.preview_needs_sneak.desc": "Only attach a preview while sneaking, whatever was marked. A plain middle click leaves a clean marker with just the distance; sneaking adds the mob, item or block above it.",
+    "pingping.options.option.preview_target": "Preview target",
+    "pingping.options.option.preview_target.desc": "When a ping you place carries a preview of what it marks. The other way round leaves a clean marker with only the distance on it.",
+    "pingping.options.preview_target.when_sneaking": "When sneaking",
+    "pingping.options.preview_target.when_not_sneaking": "When not sneaking",
+    "pingping.options.preview_target.disabled": "Disabled",
     "pingping.options.option.snap_block": "Snap to block centre",
     "pingping.options.option.snap_block.desc": "Sneak-marked blocks sit in the middle of the block. Turn off to leave the marker on the exact spot the ray struck.",
     "pingping.options.option.free_point": "Mark bare spots",
@@ -39,7 +42,7 @@
     "pingping.options.option.max_distance": "Maximum distance",
     "pingping.options.option.max_distance.desc": "How far a marker can be placed, in blocks. Entities beyond your client's tracking range cannot be snapped to regardless.",
     "pingping.options.option.pick_block_wins": "Pick block takes priority",
-    "pingping.options.option.pick_block_wins.desc": "When nothing alive is under the crosshair, let vanilla pick block have the click instead of dropping a marker.",
+    "pingping.options.option.pick_block_wins.desc": "When nothing alive is under the crosshair, let vanilla pick block have the click instead of dropping a marker. Sneaking always overrides this and pings.",
 
     "pingping.options.option.marker_scale": "Marker scale",
     "pingping.options.option.marker_scale.desc": "Size of the diamond, distance text and edge arrows.",
