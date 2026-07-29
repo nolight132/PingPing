@@ -1,0 +1,59 @@
+name: Publish
+
+on:
+    release:
+        types: [published]
+
+permissions:
+    contents: write
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - minecraft: "26.2"
+                      fabric_api: "0.156.0+26.2"
+                      yacl: "3.9.6+26.2-fabric"
+                    - minecraft: "26.1.2"
+                      fabric_api: "0.155.2+26.1.2"
+                      yacl: "3.9.6+26.1-fabric"
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-java@v4
+              with:
+                  distribution: temurin
+                  java-version: "25"
+
+            # The tag is the single source of truth for the version; gradle.properties only holds a dev default.
+            - id: meta
+              run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+            - run: >
+                  ./gradlew build
+                  -Pmod_version=${{ steps.meta.outputs.version }}
+                  -Pminecraft_version=${{ matrix.minecraft }}
+                  -Pfabric_api_version=${{ matrix.fabric_api }}
+                  -Pyacl_version=${{ matrix.yacl }}
+
+            - uses: Kir-Antipov/mc-publish@v3.3.1
+              with:
+                  modrinth-id: pingping
+                  modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  name: PingPing ${{ steps.meta.outputs.version }} for ${{ matrix.minecraft }}
+                  version: ${{ steps.meta.outputs.version }}+${{ matrix.minecraft }}
+                  version-type: release
+                  changelog: ${{ github.event.release.body }}
+                  loaders: fabric
+                  game-versions: ${{ matrix.minecraft }}
+                  java: 25
+                  dependencies: |
+                      fabric-api(required)
+                      yacl(optional)
+                      modmenu(optional)
