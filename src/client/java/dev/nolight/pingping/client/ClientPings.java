@@ -2,8 +2,8 @@ package dev.nolight.pingping.client;
 
 import dev.nolight.pingping.PingBroadcastPayload;
 import dev.nolight.pingping.PingColorPayload;
+import dev.nolight.pingping.PingColors;
 import dev.nolight.pingping.PingConfig;
-import dev.nolight.pingping.PingPing;
 import dev.nolight.pingping.PingRequestPayload;
 import dev.nolight.pingping.PingTarget;
 import java.util.ArrayList;
@@ -77,7 +77,7 @@ public final class ClientPings {
 
 		PingConfig config = PingConfig.get();
 		ClientPlayNetworking.send(new PingColorPayload(
-				PingPing.sanitiseColor(config.customColor)));
+				PingColors.sanitiseColor(config.customColor)));
 	}
 
 	private static void accept(Minecraft client, PingTarget target, java.util.UUID sender, int color) {

@@ -27,10 +27,6 @@ public final class CameraCapture {
 		LevelRenderEvents.COLLECT_SUBMITS.register(context -> {
 			CameraRenderState camera = context.levelState().cameraRenderState;
 
-			if (camera == null || camera.projectionMatrix == null || camera.pos == null) {
-				return;
-			}
-
 			Minecraft client = Minecraft.getInstance();
 			GameRendererInvoker renderer = (GameRendererInvoker) client.gameRenderer;
 			PoseStack bob = new PoseStack();
