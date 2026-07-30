@@ -1,7 +1,6 @@
 package dev.nolight.pingping.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import dev.nolight.pingping.PingConfig;
 import dev.nolight.pingping.PingPing;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;

@@ -167,7 +167,7 @@ public final class PingConfigScreen {
 				.binding(DEFAULTS.previewTarget, () -> config.previewTarget, value -> config.previewTarget = value)
 				.controller(option -> EnumControllerBuilder.create(option)
 						.enumClass(PreviewTarget.class)
-						.valueFormatter(value -> text("preview_target." + value.key())))
+						.formatValue(value -> text("preview_target." + value.key())))
 				.build();
 	}
 
