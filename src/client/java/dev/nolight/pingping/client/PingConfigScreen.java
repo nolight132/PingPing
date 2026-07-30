@@ -98,8 +98,6 @@ public final class PingConfigScreen {
 				.group(OptionGroup.createBuilder()
 						.name(text("group.colour"))
 						.description(OptionDescription.of(text("group.colour.note")))
-						.option(bool("server_colour", DEFAULTS.useServerColor, () -> config.useServerColor,
-								value -> config.useServerColor = value))
 						.option(colour(config))
 						.build())
 				.build();

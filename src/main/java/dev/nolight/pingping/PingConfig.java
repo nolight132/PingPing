@@ -17,6 +17,7 @@ public final class PingConfig {
 	private static PingConfig instance;
 
 	// --- limits, read by the logical server ---
+	public int minPingIntervalTicks = 2;
 	public double maxDistance = 256.0;
 	public double lifetimeSeconds = 4.0;
 	public int maxCharges = 5;
@@ -64,8 +65,6 @@ public final class PingConfig {
 	public int previewSize = 12;
 
 	public boolean previewFullBody = false;
-
-	public boolean useServerColor = false;
 
 	public int customColor = 0xFFE066;
 

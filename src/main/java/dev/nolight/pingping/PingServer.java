@@ -22,7 +22,7 @@ public final class PingServer {
 				(payload, context) -> handle(context.player(), payload.target()));
 
 		ServerPlayNetworking.registerGlobalReceiver(PingColorPayload.TYPE,
-				(payload, context) -> PingColors.choose(context.player(), payload.color()));
+				(payload, context) -> PingColors.applyColor(context.player(), payload.color()));
 
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> PingColors.join(handler.getPlayer()));
 
@@ -80,7 +80,7 @@ public final class PingServer {
 		Budget(long tick) {
 			this.refilledAt = tick;
 			// Not Long.MIN_VALUE: `tick - lastPing` would overflow and reject every ping forever.
-			this.lastPing = tick - PingPing.MIN_PING_INTERVAL_TICKS;
+			this.lastPing = tick - PingConfig.get().minPingIntervalTicks;
 		}
 
 		boolean tryConsume(long tick) {
@@ -89,7 +89,7 @@ public final class PingServer {
 					charges + (tick - refilledAt) / (float) config.chargeRefillTicks());
 			refilledAt = tick;
 
-			if (charges < 1.0f || tick - lastPing < PingPing.MIN_PING_INTERVAL_TICKS) {
+			if (charges < 1.0f || tick - lastPing < PingConfig.get().minPingIntervalTicks) {
 				return false;
 			}
 

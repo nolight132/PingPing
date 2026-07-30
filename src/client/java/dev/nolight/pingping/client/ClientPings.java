@@ -77,7 +77,7 @@ public final class ClientPings {
 
 		PingConfig config = PingConfig.get();
 		ClientPlayNetworking.send(new PingColorPayload(
-				config.useServerColor ? PingPing.AUTO_COLOR : PingPing.sanitiseColor(config.customColor)));
+				PingPing.sanitiseColor(config.customColor)));
 	}
 
 	private static void accept(Minecraft client, PingTarget target, java.util.UUID sender, int color) {

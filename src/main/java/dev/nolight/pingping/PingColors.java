@@ -25,14 +25,12 @@ public final class PingColors {
 		return chosen != null ? chosen : HANDED_OUT.getOrDefault(player.getUUID(), PALETTE[0]);
 	}
 
-	/** {@link PingPing#AUTO_COLOR} hands the choice back to the server. */
-	public static void choose(ServerPlayer player, int color) {
-		if (color == PingPing.AUTO_COLOR) {
-			CHOSEN.remove(player.getUUID());
-		} else {
-			CHOSEN.put(player.getUUID(), PingPing.sanitiseColor(color));
-		}
+	public static int sanitiseColor(int color) {
+		return color & 0xFFFFFF;
+	}
 
+	public static void applyColor(ServerPlayer player, int color) {
+		CHOSEN.put(player.getUUID(), sanitiseColor(color));
 		apply(player);
 	}
 
