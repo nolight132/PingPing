@@ -21,7 +21,9 @@ loom {
 	}
 }
 
-def mcBranch = project.minecraft_version.startsWith('26.1') ? '26.1' : '26.2'
+// Each build targets one minor line, so 26.3.1 gets ">=26.3 <26.4-".
+def (mcMajor, mcMinor) = project.minecraft_version.tokenize('.').take(2)*.toInteger()
+def mcDependency = ">=${mcMajor}.${mcMinor} <${mcMajor}.${mcMinor + 1}-"
 
 repositories {
 	maven {
@@ -78,7 +80,6 @@ spotless {
 
 processResources {
 	def version = project.version
-	def mcDependency = mcBranch == '26.1' ? '>=26.1 <26.2-' : '>=26.2 <26.3-'
 	inputs.property "version", version
 	inputs.property "mcDependency", mcDependency
 
